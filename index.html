@@ -34,6 +34,25 @@ main{max-width:1000px;margin:auto;padding:0 14px calc(105px + env(safe-area-inse
 .ai-panel{margin-top:14px;background:linear-gradient(145deg,#170d13,#101321);border:1px solid #49212a;border-radius:18px;overflow:hidden}.ai-head{padding:15px;border-bottom:1px solid #39202a;display:flex;align-items:center;gap:10px}.ai-icon{width:38px;height:38px;border-radius:12px;background:var(--red);display:grid;place-items:center;font-size:20px;box-shadow:0 0 16px #ff1e2d55}.ai-head b{font-family:Orbitron,sans-serif;font-size:13px}.ai-head small{display:block;color:#999;font-size:10px;margin-top:3px}.ai-status{margin-left:auto;color:#aaa;font-size:10px}.ai-chat{height:min(48vh,430px);min-height:260px;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:11px}.msg{max-width:94%;padding:11px 13px;border:1px solid var(--line);border-radius:13px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55}.msg.assistant{align-self:flex-start;background:#171725}.msg.user{align-self:flex-end;background:#35151d;border-color:#71303a}.msg-label{font-size:9px;letter-spacing:1px;color:#ff6570;font-weight:800;margin-bottom:5px}.msg.user .msg-label{color:#ffb3b8}.msg a,.sources a{color:#ff7c85;text-decoration:underline;overflow-wrap:anywhere}.sources{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:11px}.sources strong{display:block;color:#ff7c85}.sources a{display:block;margin-top:5px}.ai-form{padding:12px;border-top:1px solid #39202a;background:#0c0d17}.ai-controls{display:flex;gap:8px}.ai-controls textarea{flex:1;min-width:0;min-height:48px;max-height:120px;resize:vertical;background:#171725;color:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;font:inherit;font-size:13px}.ai-controls button{background:var(--red);border:0;border-radius:11px;color:#fff;padding:0 16px;font-weight:800;cursor:pointer}.ai-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:#888;font-size:10px}.clear{background:transparent!important;border:1px solid var(--line)!important;padding:5px 9px!important;color:#aaa!important;border-radius:8px!important}
 footer{padding:18px 10px calc(105px + env(safe-area-inset-bottom));text-align:center;color:#666;font-size:10px}
 @media(max-width:560px){main{padding:0 11px calc(105px + env(safe-area-inset-bottom))}.controls{flex-direction:column}.controls select{max-width:none;min-height:40px}.row{gap:7px;padding:9px 7px}.xp-box{min-width:80px}.pod{padding:10px 3px}.ai-controls{flex-direction:column}.ai-controls button{height:43px}.nav-btn{padding:11px 3px}}
+
+/* MGD ARENA v2 — categorias e modo solo */
+.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.category-card{background:linear-gradient(145deg,#171a2b,#101321);border:1px solid #30344c;border-radius:16px;padding:14px;text-align:left;color:#fff;cursor:pointer;min-height:88px}
+.category-card.active{border-color:var(--red);box-shadow:0 0 16px #ff1e2d33}
+.category-card .cat-emoji{font-size:24px;display:block;margin-bottom:7px}.category-card b{font-family:Orbitron,sans-serif;font-size:11px}.category-card small{display:block;color:#999;font-size:10px;margin-top:5px}
+.catalog-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:18px 0 10px}.catalog-head small{color:#999;font-size:10px}
+.game-status{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:99px;background:#272033;color:#ffc56b;font-size:9px;font-weight:800}
+.solo-panel{margin:14px 0;background:linear-gradient(145deg,#171a2b,#101321);border:1px solid #383047;border-radius:17px;padding:14px}
+.solo-top{display:flex;align-items:center;gap:10px}.solo-avatar{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ff1e2d,#76121d);display:grid;place-items:center;font-family:Orbitron,sans-serif;font-weight:900;font-size:15px}
+.solo-top b{font-family:Orbitron,sans-serif;font-size:13px}.solo-top small{display:block;color:#aaa;font-size:10px;margin-top:4px}
+.solo-xp{display:flex;justify-content:space-between;gap:8px;margin:14px 0 7px;font-size:11px}.solo-xp strong{color:var(--gold)}
+.solo-progress{height:9px;border-radius:99px;background:#292d43;overflow:hidden}.solo-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--red),#ff9b35);border-radius:99px}
+.xp-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.xp-actions button{background:#25151d;border:1px solid #74303a;color:#fff;border-radius:10px;padding:11px 4px;font-weight:800;font-size:11px;cursor:pointer}.solo-tools{display:flex;gap:8px;margin-top:9px}.solo-tools button{flex:1;background:#15182a;border:1px solid var(--line);color:#ddd;border-radius:10px;padding:10px 5px;font-size:10px;cursor:pointer}
+.empty-state{padding:22px 14px;text-align:center;color:#aaa;background:#111424;border:1px dashed #393d54;border-radius:14px;font-size:12px;line-height:1.6}
+.game-detail{display:flex;align-items:center;gap:12px;background:#15182a;border:1px solid var(--line);padding:13px;border-radius:15px;margin:12px 0}
+.game-detail .game-icon{width:54px;height:54px;flex-basis:54px}.game-detail b{font-size:13px}.game-detail small{display:block;color:#aaa;font-size:10px;margin-top:5px}
+@media(max-width:560px){.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.xp-actions button{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -50,30 +69,41 @@ footer{padding:18px 10px calc(105px + env(safe-area-inset-bottom));text-align:ce
 <section id="home" class="active">
   <div class="hero">
     <h1>BEM-VINDO À<br><span>MGD ARENA</span></h1>
-    <p>Compete, conquista XP, sobe de patente e escreve o teu nome na história da REDLINE.</p>
-    <button class="btn" onclick="mostrar('ranking')">🏆 VER RANKING COMPLETO →</button>
+    <p>O teu espaço gamer. Escolhe o teu jogo, acompanha a tua evolução e prepara-te para fazer história.</p>
+    <button class="btn" onclick="mostrar('ranking')">🎮 EXPLORAR JOGOS →</button>
     <button class="btn btn-outline" onclick="mostrar('ai')">🤖 FALAR COM A MGD AI</button>
   </div>
   <div class="stats">
-    <div class="stat"><b id="totalPlayersHome">0</b><span>JOGADORES DEMO</span></div>
-    <div class="stat"><b id="totalXPHome">0</b><span>XP TOTAL DEMO</span></div>
-    <div class="stat"><b id="topXPHome">0</b><span>TOP XP</span></div>
+    <div class="stat"><b id="totalPlayersHome">1</b><span>PERFIL DE TESTE</span></div>
+    <div class="stat"><b id="totalXPHome">0</b><span>XP DE TESTE</span></div>
+    <div class="stat"><b id="topXPHome">0</b><span>TEU XP</span></div>
   </div>
-  <div class="home-title">🔥 TOP 3 DA TEMPORADA</div><div class="podium" id="podiumHome"></div>
-  <div class="home-title">🎮 JOGOS EM DESTAQUE</div><div class="game-cards" id="gameCards"></div>
-  <div class="demo-note">⚠️ Os jogadores e XP apresentados nesta versão são dados de demonstração do protótipo. Ainda não representam contas ou resultados reais da MGD ARENA.</div>
+  <div class="home-title">🧭 ESCOLHE A TUA CATEGORIA</div>
+  <div class="category-grid" id="categoryGrid"></div>
+  <div class="catalog-head"><div class="home-title" style="margin:0">🔥 JOGOS DA ARENA</div><small>CATÁLOGO EM ORGANIZAÇÃO</small></div>
+  <div class="game-cards" id="gameCards"></div>
+  <div class="demo-note">🧪 MODO SOLO ATIVO: só existe o teu perfil local de teste. O catálogo não significa que torneios, partidas ou rankings online já estejam ligados.</div>
 </section>
 <section id="ranking">
-  <div class="tabs" id="tabs"></div>
+  <div class="home-title">🏆 RANKING E PROGRESSO</div>
+  <div class="controls"><input id="search" placeholder="🔍 Pesquisar jogo..." aria-label="Pesquisar jogo"><select id="sort"><option value="xp">Ordenar: XP</option><option value="name">Ordenar: Nome</option></select></div>
+  <div class="game-detail" id="selectedGame"></div>
   <div class="stats">
-    <div class="stat"><b id="totalPlayers">0</b><span>JOGADORES DEMO</span></div>
-    <div class="stat"><b id="totalXP">0</b><span>XP TOTAL DEMO</span></div>
-    <div class="stat"><b id="topXP">0</b><span>TOP XP</span></div>
+    <div class="stat"><b id="totalPlayers">1</b><span>PERFIL LOCAL</span></div>
+    <div class="stat"><b id="totalXP">0</b><span>XP GLOBAL</span></div>
+    <div class="stat"><b id="topXP">0</b><span>XP NO JOGO</span></div>
   </div>
-  <div class="podium" id="podium"></div>
-  <div class="controls"><input id="search" placeholder="🔍 Pesquisar jogador..."><select id="sort"><option value="xp">Ordenar: XP</option><option value="name">Ordenar: Nome</option><option value="wins">Ordenar: Vitórias</option></select></div>
+  <div class="solo-panel">
+    <div class="solo-top"><div class="solo-avatar">WM</div><div><b>WAYNE MGD</b><small id="soloGameLabel">PERFIL DE TESTE • FREE FIRE</small></div></div>
+    <div class="solo-xp"><span id="medalLabel">🥉 BRONZE</span><strong id="soloXpLabel">0 XP</strong></div>
+    <div class="solo-progress"><i id="soloProgress" style="width:0%"></i></div>
+    <div class="solo-xp"><span id="nextMedalLabel">0 / 1.500 XP</span><span id="remainingXpLabel">Faltam 1.500 XP</span></div>
+    <div class="xp-actions"><button onclick="addXP(100)">+100 XP</button><button onclick="addXP(500)">+500 XP</button><button onclick="addXP(1000)">+1.000 XP</button></div>
+    <div class="solo-tools"><button onclick="resetCurrentXP()">↺ Reiniciar XP deste jogo</button><button onclick="resetAllXP()">Reiniciar tudo</button></div>
+  </div>
+  <div class="home-title">📊 CLASSIFICAÇÃO DE TESTE</div>
   <div class="list" id="list"></div>
-  <div class="demo-note">⚠️ Ranking demonstrativo. A ligação a jogadores, partidas e XP reais será feita quando o sistema de dados/backend da Arena estiver preparado.</div>
+  <div class="demo-note">⚠️ Os XP adicionados aqui são apenas para testar a progressão e ficam guardados neste dispositivo. Ainda não são resultados oficiais nem aparecem para outros jogadores.</div>
 </section>
 <section id="ai">
   <div class="ai-panel">
@@ -87,42 +117,77 @@ Estou pronta para entrar em ação!</div>
   </div>
 </section>
 </main>
-<footer>MGD ARENA © 2026 • POWERED BY MGD REDLINE • VERSÃO DE DESENVOLVIMENTO</footer>
+<footer>MGD ARENA © 2026 • POWERED BY MGD REDLINE • VERSÃO 2.0 • MODO SOLO</footer>
 <script>
-// DADOS DE DEMONSTRAÇÃO: substituir por dados reais quando a API da Arena estiver disponível.
-let players=[
- {nome:"Wayne MGD",tag:"WM",jogos:{freefire:18250,freefiremax:12400,pubg:9800,codm:15200,fortnite:7600},wins:142,kills:1840},
- {nome:"Killer Moz",tag:"KM",jogos:{freefire:16400,freefiremax:14200,pubg:12100,codm:9800,fortnite:8900},wins:128,kills:1720},
- {nome:"Shadow X",tag:"SX",jogos:{freefire:14800,freefiremax:9800,pubg:15400,codm:11200,fortnite:10200},wins:119,kills:1650},
- {nome:"Neyma FF",tag:"NF",jogos:{freefire:13900,freefiremax:11200,pubg:8200,codm:13400,fortnite:9800},wins:105,kills:1480},
- {nome:"Dino Pro",tag:"DP",jogos:{freefire:12100,freefiremax:8900,pubg:10200,codm:8900,fortnite:12100},wins:98,kills:1320},
- {nome:"Luna Gamer",tag:"LG",jogos:{freefire:11200,freefiremax:12800,pubg:7600,codm:10200,fortnite:8900},wins:92,kills:1210},
- {nome:"Ghost MZ",tag:"GM",jogos:{freefire:9800,freefiremax:7600,pubg:9800,codm:12400,fortnite:7600},wins:84,kills:1120},
- {nome:"Turbo Boy",tag:"TB",jogos:{freefire:8700,freefiremax:9200,pubg:6800,codm:7600,fortnite:11200},wins:76,kills:980},
- {nome:"Queen V",tag:"QV",jogos:{freefire:7600,freefiremax:8400,pubg:7200,codm:9800,fortnite:9800},wins:68,kills:890},
- {nome:"Noob Master",tag:"NM",jogos:{freefire:5400,freefiremax:6200,pubg:4800,codm:5600,fortnite:6400},wins:45,kills:620}
-];
+// MGD ARENA v2 — catálogo por categorias e perfil solo local.
 const games=[
- {id:"freefire",nome:"Free Fire",emoji:"🔥",icone:"https://play-lh.googleusercontent.com/VxqoBX9loIqsESn5OPhXDLLYw8YFAlLJX3TJUb7ovyIQdRRWwGuG3jD9konTZAeWzd8VlVTDt8fkJ8BAEU4ZHQ=w240-h480"},
- {id:"freefiremax",nome:"Free Fire MAX",emoji:"👑",icone:"https://play-lh.googleusercontent.com/CHTegoh7kat0rwX0gsbqrAAepT4qYASGwJi-KyAdcxVlnQxN3pe4ahKNe6lh4_vOCutj-oQp6rWRoBKiuxvdEw=w240-h480"},
- {id:"pubg",nome:"PUBG Mobile",emoji:"🎯",icone:"https://play-lh.googleusercontent.com/Se7jR6A5R0Mk9ClaIguf46yi2K3k32JsqKb3gAtrktIh3JwnFfxrQRmG9GLvdMpbxbMrReUOxzDkStxGxNo-5Q=w240-h480"},
- {id:"codm",nome:"COD Mobile",emoji:"💥",icone:"https://play-lh.googleusercontent.com/cKXlbU72_2wSXdjcD_zPWED3EVaaOQVqqHgiA9JoRQMprYen49arNUMTngcRc9UWLnv-ANT9gyQBDQpvAn61lg=w240-h480"},
- {id:"fortnite",nome:"Fortnite",emoji:"⚡",icone:"https://play-lh.googleusercontent.com/on6jel4w7S9PtUVpPEeNhO7RRKg6y-FFkg6pr9cvcEJfuunJKX-hcJOlGZlTQO-B_E13zZMvGuE8yL_d_VU5ug=w240-h480"},
- {id:"global",nome:"GLOBAL",emoji:"🌍",icone:""}
+ {id:"ea-fc",nome:"EA SPORTS FC",cat:"football",emoji:"⚽",icone:""},
+ {id:"efootball",nome:"eFootball",cat:"football",emoji:"⚽",icone:""},
+ {id:"dls26",nome:"DLS 26",cat:"football",emoji:"🏟️",icone:""},
+ {id:"ea-fifa-mobile",nome:"EA FIFA Mobile",cat:"football",emoji:"🥅",icone:""},
+ {id:"nfsnl",nome:"Need for Speed: No Limits",cat:"racing",emoji:"🏎️",icone:""},
+ {id:"asphalt-xtreme",nome:"Asphalt Xtreme",cat:"racing",emoji:"🚙",icone:""},
+ {id:"asphalt-legends",nome:"Asphalt Legends",cat:"racing",emoji:"🏁",icone:""},
+ {id:"carx-street",nome:"CarX Street",cat:"racing",emoji:"🚘",icone:""},
+ {id:"real-racing-3",nome:"Real Racing 3",cat:"racing",emoji:"🏎️",icone:""},
+ {id:"freefire",nome:"Free Fire",cat:"battle",emoji:"🔥",icone:"https://play-lh.googleusercontent.com/VxqoBX9loIqsESn5OPhXDLLYw8YFAlLJX3TJUb7ovyIQdRRWwGuG3jD9konTZAeWzd8VlVTDt8fkJ8BAEU4ZHQ=w240-h480"},
+ {id:"freefiremax",nome:"Free Fire MAX",cat:"battle",emoji:"👑",icone:"https://play-lh.googleusercontent.com/CHTegoh7kat0rwX0gsbqrAAepT4qYASGwJi-KyAdcxVlnQxN3pe4ahKNe6lh4_vOCutj-oQp6rWRoBKiuxvdEw=w240-h480"},
+ {id:"pubg",nome:"PUBG Mobile",cat:"battle",emoji:"🎯",icone:"https://play-lh.googleusercontent.com/Se7jR6A5R0Mk9ClaIguf46yi2K3k32JsqKb3gAtrktIh3JwnFfxrQRmG9GLvdMpbxbMrReUOxzDkStxGxNo-5Q=w240-h480"},
+ {id:"codm",nome:"Call of Duty: Mobile",cat:"battle",emoji:"💥",icone:"https://play-lh.googleusercontent.com/cKXlbU72_2wSXdjcD_zPWED3EVaaOQVqqHgiA9JoRQMprYen49arNUMTngcRc9UWLnv-ANT9gyQBDQpvAn61lg=w240-h480"},
+ {id:"fortnite",nome:"Fortnite",cat:"battle",emoji:"⚡",icone:"https://play-lh.googleusercontent.com/on6jel4w7S9PtUVpPEeNhO7RRKg6y-FFkg6pr9cvcEJfuunJKX-hcJOlGZlTQO-B_E13zZMvGuE8yL_d_VU5ug=w240-h480"},
+ {id:"minecraft",nome:"Minecraft",cat:"adventure",emoji:"⛏️",icone:""},
+ {id:"roblox",nome:"Roblox",cat:"adventure",emoji:"🧱",icone:""},
+ {id:"terraria",nome:"Terraria",cat:"adventure",emoji:"🌳",icone:""},
+ {id:"genshin",nome:"Genshin Impact",cat:"adventure",emoji:"✨",icone:""},
+ {id:"shadow-fight",nome:"Shadow Fight 4",cat:"fight",emoji:"🥷",icone:""},
+ {id:"mortal-kombat",nome:"Mortal Kombat Mobile",cat:"fight",emoji:"🥊",icone:""},
+ {id:"brawlhalla",nome:"Brawlhalla",cat:"fight",emoji:"⚔️",icone:""},
+ {id:"8ball",nome:"8 Ball Pool",cat:"sport",emoji:"🎱",icone:""},
+ {id:"basketball-stars",nome:"Basketball Stars",cat:"sport",emoji:"🏀",icone:""},
+ {id:"nba2k",nome:"NBA 2K Mobile",cat:"sport",emoji:"🏀",icone:""},
+ {id:"clash-clans",nome:"Clash of Clans",cat:"strategy",emoji:"🛡️",icone:""},
+ {id:"clash-royale",nome:"Clash Royale",cat:"strategy",emoji:"👑",icone:""},
+ {id:"mobile-legends",nome:"Mobile Legends: Bang Bang",cat:"strategy",emoji:"🧙",icone:""},
+ {id:"brawl-stars",nome:"Brawl Stars",cat:"strategy",emoji:"⭐",icone:""}
 ];
-function gameIcon(g,small=false){if(!g.icone)return `<span class="tab-emoji">${g.emoji}</span>`;return `<img class="${small?'tab-icon':'game-icon'}" src="${g.icone}" alt="Ícone ${g.nome}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'tab-emoji',textContent:'${g.emoji}'}))">`}
-let currentGame="freefire";
-function mostrar(id){document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById(({home:'btnHome',ranking:'btnRanking',ai:'btnAI'})[id]).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(id==='ai')document.getElementById('message').focus();render();}
-function medalha(xp){if(xp>=15000)return{nome:'GRANDMASTER',emoji:'👑',cor:'#ffd700',next:20000};if(xp>=12000)return{nome:'MASTER',emoji:'💎',cor:'#00e5ff',next:15000};if(xp>=9000)return{nome:'DIAMANTE',emoji:'💠',cor:'#4da6ff',next:12000};if(xp>=6000)return{nome:'PLATINA',emoji:'✨',cor:'#e0e0e0',next:9000};if(xp>=3500)return{nome:'OURO',emoji:'🥇',cor:'#ffd700',next:6000};if(xp>=1500)return{nome:'PRATA',emoji:'🥈',cor:'#c0c0c0',next:3500};return{nome:'BRONZE',emoji:'🥉',cor:'#cd7f32',next:1500};}
-function getXP(p){return currentGame==='global'?Object.values(p.jogos).reduce((a,b)=>a+b,0):(p.jogos[currentGame]||0)}
-function renderTabs(){document.getElementById('tabs').innerHTML=games.map(g=>`<button class="tab ${g.id===currentGame?'active':''}" onclick="mudarJogo('${g.id}')">${gameIcon(g,true)}<span>${g.nome}</span></button>`).join('')}
-function mudarJogo(id){currentGame=id;render()}
-function render(){renderTabs();const search=document.getElementById('search').value.toLowerCase();const sort=document.getElementById('sort').value;let lista=players.map(p=>({...p,xp:getXP(p),med:medalha(getXP(p))}));if(sort==='xp')lista.sort((a,b)=>b.xp-a.xp);if(sort==='name')lista.sort((a,b)=>a.nome.localeCompare(b.nome));if(sort==='wins')lista.sort((a,b)=>b.wins-a.wins);const filtered=search?lista.filter(p=>p.nome.toLowerCase().includes(search)):lista;
-const total=lista.reduce((s,p)=>s+p.xp,0),top=lista[0]?.xp||0;['totalPlayers','totalPlayersHome'].forEach(id=>document.getElementById(id).textContent=players.length);['totalXP','totalXPHome'].forEach(id=>document.getElementById(id).textContent=total.toLocaleString());['topXP','topXPHome'].forEach(id=>document.getElementById(id).textContent=top.toLocaleString());
-const top3=lista.slice(0,3),order=[top3[1],top3[0],top3[2]];const podiumHTML=order.map((p,i)=>{if(!p)return'<div></div>';const pos=p===top3[0]?1:p===top3[1]?2:3;return`<div class="pod ${pos===1?'first':''}"><div class="avatar">${p.tag}</div><b>${p.nome}</b><small>${pos}º LUGAR</small><div class="medal">${p.med.emoji} ${p.med.nome}</div><div class="xp">${p.xp.toLocaleString()} XP</div></div>`}).join('');document.getElementById('podium').innerHTML=podiumHTML;document.getElementById('podiumHome').innerHTML=podiumHTML;
-document.getElementById('gameCards').innerHTML=games.filter(g=>g.id!=='global').map(g=>{const best=[...players].sort((a,b)=>(b.jogos[g.id]||0)-(a.jogos[g.id]||0))[0];return`<div class="gcard" onclick="mostrar('ranking');mudarJogo('${g.id}')"><div class="game-title">${gameIcon(g)}<b>${g.nome}</b></div><span>Top demonstração: ${best.nome}</span><i>${best.jogos[g.id].toLocaleString()} XP → Ver ranking</i></div>`}).join('');
-document.getElementById('list').innerHTML=filtered.map((p,idx)=>{const prog=Math.min(100,p.xp/p.med.next*100);return`<div class="row ${idx===0&&!search?'top1':''}"><div class="pos ${idx===0&&!search?'top1':''}">${idx+1}</div><div class="mini" style="background:${idx===0?'#ffd700':idx===1?'#c0c0c0':idx===2?'#cd7f32':'#1e2338'};color:${idx<3?'#000':'#fff'}">${p.tag}</div><div class="info"><b>${p.nome}</b><span>${p.wins} Vitórias • ${p.kills} Kills</span><div class="progress"><i style="width:${prog}%"></i></div></div><div class="xp-box"><span class="badge" style="background:${p.med.cor}22;color:${p.med.cor};border:1px solid ${p.med.cor}">${p.med.emoji} ${p.med.nome}</span><b>${p.xp.toLocaleString()} XP</b><span>Faltam ${Math.max(0,p.med.next-p.xp)} XP p/ próximo</span></div></div>`}).join('');document.getElementById('liveText').textContent='REDLINE SYSTEM • '+games.find(g=>g.id===currentGame).nome;}
-document.getElementById('search').addEventListener('input',render);document.getElementById('sort').addEventListener('change',render);render();
+const categories=[
+ {id:"all",nome:"TODAS",emoji:"🎮",desc:"Ver o catálogo completo"},
+ {id:"football",nome:"FOOTBALL",emoji:"⚽",desc:"4 jogos"},
+ {id:"racing",nome:"CORRIDA",emoji:"🏎️",desc:"5 jogos"},
+ {id:"battle",nome:"BATTLE ROYALE",emoji:"🎯",desc:"5 jogos"},
+ {id:"adventure",nome:"AVENTURA",emoji:"🗺️",desc:"4 jogos"},
+ {id:"fight",nome:"LUTA",emoji:"🥊",desc:"3 jogos"},
+ {id:"sport",nome:"DESPORTO",emoji:"🏆",desc:"3 jogos"},
+ {id:"strategy",nome:"ESTRATÉGIA",emoji:"🧠",desc:"4 jogos"}
+];
+const STORAGE_KEY='mgd_arena_solo_v2';
+function loadProgress(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}}
+let progress=loadProgress();
+let currentCategory='all';
+let currentGame='freefire';
+function saveProgress(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress))}catch(e){alert('Não foi possível guardar os dados neste dispositivo.')}}
+function xpFor(id){const n=Number(progress[id]||0);return Number.isFinite(n)?Math.max(0,Math.floor(n)):0}
+function totalXP(){return games.reduce((sum,g)=>sum+xpFor(g.id),0)}
+function medalha(xp){if(xp>=15000)return{nome:'GRANDMASTER',emoji:'👑',cor:'#ffd700',min:15000,next:20000};if(xp>=12000)return{nome:'MASTER',emoji:'💎',cor:'#00e5ff',min:12000,next:15000};if(xp>=9000)return{nome:'DIAMANTE',emoji:'💠',cor:'#4da6ff',min:9000,next:12000};if(xp>=6000)return{nome:'PLATINA',emoji:'✨',cor:'#e0e0e0',min:6000,next:9000};if(xp>=3500)return{nome:'OURO',emoji:'🥇',cor:'#ffd700',min:3500,next:6000};if(xp>=1500)return{nome:'PRATA',emoji:'🥈',cor:'#c0c0c0',min:1500,next:3500};return{nome:'BRONZE',emoji:'🥉',cor:'#cd7f32',min:0,next:1500}}
+function gameIcon(g,small=false){if(!g.icone)return `<span class="${small?'tab-emoji':'game-icon fallback'}">${g.emoji}</span>`;return `<img class="${small?'tab-icon':'game-icon'}" src="${g.icone}" alt="Ícone ${g.nome}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'tab-emoji',textContent:'${g.emoji}'}))">`}
+function selectGame(id){if(!games.some(g=>g.id===id))return;currentGame=id;mostrar('ranking');render()}
+function selectCategory(id){currentCategory=id;renderCategories();renderGames()}
+function renderCategories(){const el=document.getElementById('categoryGrid');el.innerHTML=categories.map(c=>`<button class="category-card ${currentCategory===c.id?'active':''}" onclick="selectCategory('${c.id}')"><span class="cat-emoji">${c.emoji}</span><b>${c.nome}</b><small>${c.desc}</small></button>`).join('')}
+function renderGames(){const term=(document.getElementById('search')?.value||'').trim().toLowerCase();let list=games.filter(g=>(currentCategory==='all'||g.cat===currentCategory)&&(!term||g.nome.toLowerCase().includes(term)));const sort=document.getElementById('sort')?.value||'xp';if(sort==='name')list.sort((a,b)=>a.nome.localeCompare(b.nome));document.getElementById('gameCards').innerHTML=list.map(g=>`<button class="gcard" onclick="selectGame('${g.id}')"><div class="game-title">${gameIcon(g)}<b>${g.nome}</b></div><span>Categoria: ${categories.find(c=>c.id===g.cat).nome}</span><em class="game-status">CATÁLOGO / TESTE</em></button>`).join('')||'<div class="empty-state">Nenhum jogo encontrado nesta categoria.</div>'}
+function addXP(amount){progress[currentGame]=xpFor(currentGame)+amount;saveProgress();render()}
+function resetCurrentXP(){if(!confirm('Reiniciar o XP de '+games.find(g=>g.id===currentGame).nome+'?'))return;delete progress[currentGame];saveProgress();render()}
+function resetAllXP(){if(!confirm('Apagar todo o XP de teste guardado neste dispositivo?'))return;progress={};saveProgress();render()}
+function render(){const game=games.find(g=>g.id===currentGame)||games[0];const xp=xpFor(game.id),med=medalha(xp),global=totalXP();const progressPct=Math.max(0,Math.min(100,((xp-med.min)/(med.next-med.min))*100));
+ document.getElementById('totalPlayersHome').textContent='1';document.getElementById('totalXPHome').textContent=global.toLocaleString();document.getElementById('topXPHome').textContent=global.toLocaleString();
+ document.getElementById('totalPlayers').textContent='1';document.getElementById('totalXP').textContent=global.toLocaleString();document.getElementById('topXP').textContent=xp.toLocaleString();
+ document.getElementById('selectedGame').innerHTML=`${gameIcon(game)}<div><b>${game.nome}</b><small>${categories.find(c=>c.id===game.cat).nome} • PROGRESSO LOCAL DE TESTE</small></div>`;
+ document.getElementById('soloGameLabel').textContent='PERFIL DE TESTE • '+game.nome.toUpperCase();document.getElementById('soloXpLabel').textContent=xp.toLocaleString()+' XP';document.getElementById('medalLabel').textContent=med.emoji+' '+med.nome;document.getElementById('soloProgress').style.width=progressPct+'%';document.getElementById('nextMedalLabel').textContent=xp.toLocaleString()+' / '+med.next.toLocaleString()+' XP';document.getElementById('remainingXpLabel').textContent='Faltam '+Math.max(0,med.next-xp).toLocaleString()+' XP';
+ document.getElementById('list').innerHTML=`<div class="row top1"><div class="pos top1">1</div><div class="mini">WM</div><div class="info"><b>WAYNE MGD</b><span>Perfil local • dados de teste</span><div class="progress"><i style="width:${progressPct}%"></i></div></div><div class="xp-box"><span class="badge" style="background:${med.cor}22;color:${med.cor};border:1px solid ${med.cor}">${med.emoji} ${med.nome}</span><b>${xp.toLocaleString()} XP</b><span>Faltam ${Math.max(0,med.next-xp).toLocaleString()} XP</span></div></div>`;
+ document.getElementById('liveText').textContent='MODO SOLO • '+game.nome;
+}
+function mostrar(id){document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const navId=({home:'btnHome',ranking:'btnRanking',ai:'btnAI'})[id];if(navId)document.getElementById(navId).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(id==='ai')document.getElementById('message').focus();render()}
+document.getElementById('search').addEventListener('input',renderGames);document.getElementById('sort').addEventListener('change',renderGames);
+renderCategories();renderGames();render();
 setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 // MGD AI: mantém a ligação ao backend independente existente.
 const API='https://mgd-arena-intelligence.onrender.com';const chat=document.getElementById('chat'),form=document.getElementById('form'),input=document.getElementById('message'),send=document.getElementById('send');const history=[];
