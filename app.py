@@ -12,7 +12,7 @@ CORS(app, origins=os.getenv("ALLOWED_ORIGINS", "*").split(","))
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "").strip()
 
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = "openai/gpt-oss-120b"  # Modelo oficial escolhido para a MGD AI ARENA
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 TAVILY_URL = "https://api.tavily.com/search"
 
