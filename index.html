@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt">
+<html lang="mul">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080c16"><title>MGD ARENA — AI Intelligence Test</title>
@@ -22,6 +22,7 @@ form{padding:14px;border-top:1px solid var(--line);background:#0b1220}.controls{
 (() => {
  const API="https://mgd-arena-intelligence.onrender.com", chat=document.querySelector("#chat"), form=document.querySelector("#form"), input=document.querySelector("#message"), send=document.querySelector("#send"), history=[];
  function add(role,text,sources=[]){
+  if(role!=="user") text=String(text).split("*").join("");
   const box=document.createElement("div");box.className="msg "+(role==="user"?"user":"assistant");
   const label=document.createElement("div");label.className="label";label.textContent=role==="user"?"TU":"MGD AI";
   const body=document.createElement("div");body.textContent=text;box.append(label,body);
@@ -32,7 +33,7 @@ form{padding:14px;border-top:1px solid var(--line);background:#0b1220}.controls{
  }
  async function health(){try{const r=await fetch(API+"/health");if(!r.ok)throw Error();const d=await r.json();document.querySelector("#dot").classList.toggle("ok",d.status==="ok");document.querySelector("#status").textContent=`Backend ${d.status} · Groq ${d.groq_configured?"OK":"pendente"} · Web ${d.web_search_configured?"OK":"pendente"}`}catch(e){document.querySelector("#status").textContent="Backend indisponível no momento."}}
  form.addEventListener("submit",async e=>{e.preventDefault();const message=input.value.trim();if(!message||send.disabled)return;add("user",message);history.push({role:"user",content:message});input.value="";send.disabled=true;send.textContent="A PENSAR…";const wait=document.createElement("div");wait.className="msg assistant";wait.textContent="A MGD AI está a analisar a pergunta… 🧠";chat.append(wait);
-  try{const r=await fetch(API+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message,history:history.slice(0,-1)})});const d=await r.json().catch(()=>({}));wait.remove();if(!r.ok)throw Error(d.error||"Erro HTTP "+r.status);const reply=typeof d.reply==="string"?d.reply:"Resposta inválida do backend.";history.push({role:"assistant",content:reply});add("assistant",reply,Array.isArray(d.sources)?d.sources:[]);if(d.searched){const n=document.createElement("div");n.className="notice";n.textContent="🌐 Esta resposta utilizou resultados da pesquisa Web.";chat.append(n)}}catch(err){wait.remove();add("assistant","Não consegui concluir o pedido: "+err.message)}finally{send.disabled=false;send.textContent="ENVIAR ➤";input.focus()}
+  try{const r=await fetch(API+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message,history:history.slice(0,-1)})});const d=await r.json().catch(()=>({}));wait.remove();if(!r.ok)throw Error(d.error||"Erro HTTP "+r.status);const reply=(typeof d.reply==="string"?d.reply:"Resposta inválida do backend.").split("*").join("");history.push({role:"assistant",content:reply});add("assistant",reply,Array.isArray(d.sources)?d.sources:[]);if(d.searched){const n=document.createElement("div");n.className="notice";n.textContent="🌐 Esta resposta utilizou resultados da pesquisa Web.";chat.append(n)}}catch(err){wait.remove();add("assistant","Não consegui concluir o pedido: "+err.message)}finally{send.disabled=false;send.textContent="ENVIAR ➤";input.focus()}
  });
  input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
  document.querySelector("#clear").addEventListener("click",()=>{history.length=0;chat.innerHTML="";add("assistant","Conversa limpa! 🎮 Faz a tua próxima pergunta.")});
