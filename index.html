@@ -1,669 +1,128 @@
 <!DOCTYPE html>
-<html lang="mul">
+<html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#080c16">
-
-<title>MGD ARENA — AI Intelligence</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080a12">
+<title>MGD ARENA | REDLINE ELITE GAMING</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  color-scheme: dark;
-  --bg: #080c16;
-  --panel: #111c2d;
-  --line: #293950;
-  --txt: #edf4ff;
-  --muted: #9aabc2;
-  --blue: #35a7ff;
-  --cyan: #56e0e8;
-  --green: #36d399;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(ellipse at 50% -20%, #16304c, transparent 55%), var(--bg);
-  color: var(--txt);
-  font: 15px/1.5 system-ui, Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  padding: 18px;
-}
-
-.app {
-  width: min(900px, 100%);
-  min-height: calc(100vh - 36px);
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-  background: #0c121ff5;
-  box-shadow: 0 20px 60px #0008;
-}
-
-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(110deg, #101e32, #101827);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--blue), #725cff);
-  font-size: 24px;
-  font-weight: 900;
-}
-
-h1 {
-  font-size: 19px;
-  margin: 0;
-}
-
-.sub {
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-
-.status {
-  margin-top: 13px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #64748b;
-  margin-right: 7px;
-}
-
-.dot.ok {
-  background: var(--green);
-}
-
-#chat {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  overflow: auto;
-  min-height: 340px;
-}
-
-.msg {
-  max-width: 94%;
-  padding: 13px 15px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.assistant {
-  align-self: flex-start;
-  background: #121d2e;
-}
-
-.user {
-  align-self: flex-end;
-  background: #12304b;
-  border-color: #24557d;
-}
-
-.label {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: var(--cyan);
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-
-.user .label {
-  color: #9dccff;
-}
-
-a {
-  color: #72c7ff;
-  overflow-wrap: anywhere;
-  text-decoration: underline;
-}
-
-a:hover {
-  color: var(--cyan);
-}
-
-.sources {
-  margin-top: 12px;
-  padding-top: 9px;
-  border-top: 1px solid var(--line);
-  font-size: 13px;
-}
-
-.sources strong {
-  display: block;
-  color: var(--cyan);
-}
-
-.sources a {
-  display: block;
-  margin-top: 5px;
-}
-
-.notice {
-  text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  padding: 8px;
-}
-
-form {
-  padding: 14px;
-  border-top: 1px solid var(--line);
-  background: #0b1220;
-}
-
-.controls {
-  display: flex;
-  gap: 9px;
-}
-
-textarea {
-  flex: 1;
-  min-height: 52px;
-  max-height: 150px;
-  resize: vertical;
-  background: var(--panel);
-  color: var(--txt);
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  padding: 12px;
-  font: inherit;
-}
-
-button {
-  border: 0;
-  border-radius: 11px;
-  padding: 0 19px;
-  background: linear-gradient(135deg, var(--blue), #536dff);
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: .55;
-}
-
-.bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.clear {
-  background: transparent;
-  border: 1px solid var(--line);
-  padding: 6px 10px;
-  color: var(--muted);
-}
-
-@media(max-width:560px) {
-  body {
-    padding: 0;
-  }
-
-  .app {
-    min-height: 100vh;
-    border: 0;
-    border-radius: 0;
-  }
-
-  .controls {
-    flex-direction: column;
-  }
-
-  button {
-    height: 44px;
-  }
-
-  .msg {
-    max-width: 100%;
-  }
-}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#ff1e2d;--dark:#080a12;--card:#111424;--gold:#ffd700;--line:#292d43;--txt:#fff;--muted:#9a9eae;--green:#00ff88}
+body{background:var(--dark);color:var(--txt);font-family:Inter,sans-serif;overflow-x:hidden;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(255,30,45,.2),transparent),radial-gradient(600px 300px at 90% 20%,rgba(255,30,45,.08),transparent);pointer-events:none;z-index:-1}
+header{padding:18px 16px 12px;text-align:center;position:relative;z-index:2}
+.logo{font-family:Orbitron,sans-serif;font-size:clamp(25px,6vw,36px);font-weight:900;letter-spacing:2px}.logo span{color:var(--red)}
+.logo small{display:block;font-size:10px;letter-spacing:5px;color:#aaa;margin-top:3px}.logo small b{color:#fff}
+.live{display:inline-flex;gap:8px;align-items:center;background:#1a1e30;border:1px solid var(--line);padding:6px 12px;border-radius:99px;font-size:11px;margin-top:10px;color:#c5c7d1}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green);animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.4}}
+nav{display:flex;gap:8px;padding:10px 12px;position:sticky;top:0;background:rgba(8,10,18,.96);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid #222747}
+.nav-btn{flex:1;padding:12px 6px;border-radius:12px;border:1px solid var(--line);background:#15182a;color:#fff;font-weight:800;font-family:Orbitron,sans-serif;font-size:clamp(10px,2.8vw,13px);cursor:pointer}
+.nav-btn.active{background:var(--red);border-color:var(--red);box-shadow:0 0 18px rgba(255,30,45,.4)}
+main{max-width:1000px;margin:auto;padding:0 14px 20px}section{display:none}section.active{display:block}
+.hero{background:linear-gradient(135deg,#1a0a0d,#111424);border:1px solid #3b2029;border-radius:20px;padding:22px;text-align:center;margin-top:14px}
+.hero h1{font-family:Orbitron,sans-serif;font-size:clamp(22px,5vw,30px);line-height:1.25}.hero h1 span{color:var(--red)}.hero p{color:#aaa;font-size:13px;margin:10px 0 16px;line-height:1.6}
+.btn{width:100%;background:var(--red);border:0;color:#fff;padding:14px;border-radius:14px;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:.5px;cursor:pointer}.btn-outline{background:transparent;border:1px solid var(--line);margin-top:8px}.btn:disabled{opacity:.55;cursor:wait}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.stat{background:var(--card);border:1px solid #222747;border-radius:16px;padding:12px 6px;text-align:center}.stat b{font-family:Orbitron,sans-serif;font-size:clamp(16px,4vw,21px);display:block}.stat span{font-size:10px;color:#999}
+.home-title{font-family:Orbitron,sans-serif;font-size:14px;margin:20px 0 10px}.game-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gcard{background:var(--card);border:1px solid #222747;border-radius:16px;padding:14px;cursor:pointer}.gcard b{font-size:13px}.gcard span{display:block;font-size:11px;color:#999;margin-top:4px}.gcard i{display:block;font-style:normal;color:var(--gold);font-weight:800;font-size:11px;margin-top:7px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 10px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;padding:10px 15px;border-radius:99px;background:#15182a;border:1px solid var(--line);cursor:pointer;font-weight:700;font-size:12px;color:#fff}.tab.active{background:var(--red);border-color:var(--red);box-shadow:0 0 15px rgba(255,30,45,.35)}
+.podium{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:8px;padding:14px 0;align-items:end}.pod{border-radius:16px;padding:12px 5px;text-align:center;border:1px solid var(--line);background:#111424;min-width:0}.pod.first{background:linear-gradient(180deg,#2a1a00,#12141f);border-color:var(--gold);transform:translateY(-4px)}.avatar{width:48px;height:48px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-weight:900;font-size:16px;background:#30364d}.pod.first .avatar{background:var(--gold);color:#000;box-shadow:0 0 18px #ffd700}.pod b{font-size:11px;display:block;overflow-wrap:anywhere}.pod small{font-size:9px;color:#aaa}.medal{font-size:10px;margin-top:5px}.xp{color:var(--gold);font-weight:800;font-size:11px;margin-top:4px}
+.controls{display:flex;gap:8px;padding:4px 0 12px}.controls input{flex:1;min-width:0;background:#12141f;border:1px solid var(--line);color:#fff;padding:11px 12px;border-radius:12px;outline:none}.controls select{background:#12141f;border:1px solid var(--line);color:#fff;padding:11px;border-radius:12px;max-width:130px}.list{display:flex;flex-direction:column;gap:9px}.row{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid #222747;border-radius:15px;padding:11px}.row.top1{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.12)}.pos{font-family:Orbitron,sans-serif;font-weight:900;width:25px;text-align:center;font-size:15px;flex-shrink:0}.pos.top1{color:var(--gold)}.mini{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;background:#1e2338;flex-shrink:0;font-size:11px}.info{flex:1;min-width:0}.info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.info span{font-size:10px;color:#999}.badge{font-size:9px;padding:3px 6px;border-radius:99px;font-weight:800;white-space:nowrap}.xp-box{text-align:right;min-width:90px}.xp-box b{color:var(--gold);font-size:12px;display:block}.xp-box span{font-size:9px;color:#999;display:block}.progress{height:4px;background:#222747;border-radius:99px;margin-top:5px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--red),#ff7a00);border-radius:99px}
+.demo-note{margin:12px 0;padding:10px 12px;border:1px solid #6b4d17;background:#211a0b;color:#e7c878;border-radius:10px;font-size:11px;line-height:1.5}
+/* AI */
+.ai-panel{margin-top:14px;background:linear-gradient(145deg,#170d13,#101321);border:1px solid #49212a;border-radius:18px;overflow:hidden}.ai-head{padding:15px;border-bottom:1px solid #39202a;display:flex;align-items:center;gap:10px}.ai-icon{width:38px;height:38px;border-radius:12px;background:var(--red);display:grid;place-items:center;font-size:20px;box-shadow:0 0 16px #ff1e2d55}.ai-head b{font-family:Orbitron,sans-serif;font-size:13px}.ai-head small{display:block;color:#999;font-size:10px;margin-top:3px}.ai-status{margin-left:auto;color:#aaa;font-size:10px}.ai-chat{height:min(48vh,430px);min-height:260px;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:11px}.msg{max-width:94%;padding:11px 13px;border:1px solid var(--line);border-radius:13px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55}.msg.assistant{align-self:flex-start;background:#171725}.msg.user{align-self:flex-end;background:#35151d;border-color:#71303a}.msg-label{font-size:9px;letter-spacing:1px;color:#ff6570;font-weight:800;margin-bottom:5px}.msg.user .msg-label{color:#ffb3b8}.msg a,.sources a{color:#ff7c85;text-decoration:underline;overflow-wrap:anywhere}.sources{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:11px}.sources strong{display:block;color:#ff7c85}.sources a{display:block;margin-top:5px}.ai-form{padding:12px;border-top:1px solid #39202a;background:#0c0d17}.ai-controls{display:flex;gap:8px}.ai-controls textarea{flex:1;min-width:0;min-height:48px;max-height:120px;resize:vertical;background:#171725;color:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;font:inherit;font-size:13px}.ai-controls button{background:var(--red);border:0;border-radius:11px;color:#fff;padding:0 16px;font-weight:800;cursor:pointer}.ai-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:#888;font-size:10px}.clear{background:transparent!important;border:1px solid var(--line)!important;padding:5px 9px!important;color:#aaa!important;border-radius:8px!important}
+footer{padding:18px 10px 25px;text-align:center;color:#666;font-size:10px}
+@media(max-width:560px){main{padding:0 11px 18px}.controls{flex-direction:column}.controls select{max-width:none;min-height:40px}.row{gap:7px;padding:9px 7px}.xp-box{min-width:80px}.pod{padding:10px 3px}.ai-controls{flex-direction:column}.ai-controls button{height:43px}.nav-btn{padding:11px 3px}}
 </style>
 </head>
-
 <body>
-
-<div class="app">
-
 <header>
-  <div class="brand">
-    <div class="logo">M</div>
-
-    <div>
-      <h1>MGD ARENA AI</h1>
-      <div class="sub">INTELLIGENCE · GROQ + WEB SEARCH</div>
-    </div>
-  </div>
-
-  <div class="status">
-    <span id="dot" class="dot"></span>
-    <span id="status">A verificar backend…</span>
-  </div>
+  <div class="logo">MGD <span>ARENA</span><small>ELITE <b>GAMING</b> SYSTEM</small></div>
+  <div class="live"><span class="dot"></span><span id="liveText">REDLINE SYSTEM • ONLINE</span> • <span id="clock">00:00:00</span></div>
 </header>
-
-<main id="chat" aria-live="polite">
-
-  <div class="msg assistant">
-    <div class="label">MGD AI</div>
-    Salve, gamer! 🎮🔥
-    Faz uma pergunta sobre jogos, disponibilidade, requisitos ou atualizações.
-    Estou pronta para entrar em ação!
+<nav>
+  <button class="nav-btn active" id="btnHome" onclick="mostrar('home')">🏠 HOME</button>
+  <button class="nav-btn" id="btnRanking" onclick="mostrar('ranking')">🏆 RANKING</button>
+  <button class="nav-btn" id="btnAI" onclick="mostrar('ai')">🤖 MGD AI</button>
+</nav>
+<main>
+<section id="home" class="active">
+  <div class="hero">
+    <h1>BEM-VINDO À<br><span>MGD ARENA</span></h1>
+    <p>Compete, conquista XP, sobe de patente e escreve o teu nome na história da REDLINE.</p>
+    <button class="btn" onclick="mostrar('ranking')">🏆 VER RANKING COMPLETO →</button>
+    <button class="btn btn-outline" onclick="mostrar('ai')">🤖 FALAR COM A MGD AI</button>
   </div>
-
+  <div class="stats">
+    <div class="stat"><b id="totalPlayersHome">0</b><span>JOGADORES DEMO</span></div>
+    <div class="stat"><b id="totalXPHome">0</b><span>XP TOTAL DEMO</span></div>
+    <div class="stat"><b id="topXPHome">0</b><span>TOP XP</span></div>
+  </div>
+  <div class="home-title">🔥 TOP 3 DA TEMPORADA</div><div class="podium" id="podiumHome"></div>
+  <div class="home-title">🎮 JOGOS EM DESTAQUE</div><div class="game-cards" id="gameCards"></div>
+  <div class="demo-note">⚠️ Os jogadores e XP apresentados nesta versão são dados de demonstração do protótipo. Ainda não representam contas ou resultados reais da MGD ARENA.</div>
+</section>
+<section id="ranking">
+  <div class="tabs" id="tabs"></div>
+  <div class="stats">
+    <div class="stat"><b id="totalPlayers">0</b><span>JOGADORES DEMO</span></div>
+    <div class="stat"><b id="totalXP">0</b><span>XP TOTAL DEMO</span></div>
+    <div class="stat"><b id="topXP">0</b><span>TOP XP</span></div>
+  </div>
+  <div class="podium" id="podium"></div>
+  <div class="controls"><input id="search" placeholder="🔍 Pesquisar jogador..."><select id="sort"><option value="xp">Ordenar: XP</option><option value="name">Ordenar: Nome</option><option value="wins">Ordenar: Vitórias</option></select></div>
+  <div class="list" id="list"></div>
+  <div class="demo-note">⚠️ Ranking demonstrativo. A ligação a jogadores, partidas e XP reais será feita quando o sistema de dados/backend da Arena estiver preparado.</div>
+</section>
+<section id="ai">
+  <div class="ai-panel">
+    <div class="ai-head"><div class="ai-icon">🤖</div><div><b>MGD AI</b><small>REDLINE GAMING INTELLIGENCE</small></div><div class="ai-status" id="aiStatus">A verificar…</div></div>
+    <div class="ai-chat" id="chat" aria-live="polite">
+      <div class="msg assistant"><div class="msg-label">MGD AI</div>Salve, gamer! 🎮🔥
+Faz uma pergunta sobre jogos, disponibilidade, requisitos ou atualizações.
+Estou pronta para entrar em ação!</div>
+    </div>
+    <form class="ai-form" id="form"><div class="ai-controls"><textarea id="message" maxlength="6000" placeholder="Escreve a tua pergunta..." required></textarea><button id="send">ENVIAR ➤</button></div><div class="ai-bottom"><span>Enter para enviar · Shift + Enter para nova linha</span><button class="clear" id="clear" type="button">Limpar conversa</button></div></form>
+  </div>
+</section>
 </main>
-
-<div class="notice">
-  MGD ARENA AI · INTELLIGENCE SYSTEM
-</div>
-
-<form id="form">
-
-  <div class="controls">
-
-    <textarea
-      id="message"
-      maxlength="6000"
-      placeholder="Escreve a tua pergunta..."
-      required
-    ></textarea>
-
-    <button id="send">ENVIAR ➤</button>
-
-  </div>
-
-  <div class="bottom">
-
-    <span>Enter para enviar · Shift + Enter para nova linha</span>
-
-    <button class="clear" id="clear" type="button">
-      Limpar conversa
-    </button>
-
-  </div>
-
-</form>
-
-</div>
-
+<footer>MGD ARENA © 2026 • POWERED BY MGD REDLINE • VERSÃO DE DESENVOLVIMENTO</footer>
 <script>
-(() => {
-
-  const API = "https://mgd-arena-intelligence.onrender.com";
-
-  const chat = document.querySelector("#chat");
-  const form = document.querySelector("#form");
-  const input = document.querySelector("#message");
-  const send = document.querySelector("#send");
-
-  const history = [];
-
-  // Remove asteriscos das respostas da IA.
-  function cleanText(text) {
-    return String(text).split("*").join("");
-  }
-
-  // Converte URLs e links Markdown em links clicáveis.
-  function renderMessage(text) {
-
-    const body = document.createElement("div");
-
-    text = cleanText(text);
-
-    const pattern =
-      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+)/g;
-
-    let lastIndex = 0;
-    let match;
-
-    while ((match = pattern.exec(text)) !== null) {
-
-      body.appendChild(
-        document.createTextNode(
-          text.slice(lastIndex, match.index)
-        )
-      );
-
-      const label = match[1] || match[3];
-
-      let rawUrl = match[2] || match[3];
-
-      let trailing = "";
-
-      if (!match[2]) {
-
-        while (/[.,!?;:]$/.test(rawUrl)) {
-
-          trailing = rawUrl.slice(-1) + trailing;
-
-          rawUrl = rawUrl.slice(0, -1);
-        }
-      }
-
-      try {
-
-        const url = new URL(rawUrl);
-
-        if (!["http:", "https:"].includes(url.protocol)) {
-          throw new Error("URL inválida");
-        }
-
-        const link = document.createElement("a");
-
-        link.href = url.href;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = label;
-
-        body.appendChild(link);
-
-        if (trailing) {
-          body.appendChild(
-            document.createTextNode(trailing)
-          );
-        }
-
-      } catch (error) {
-
-        body.appendChild(
-          document.createTextNode(match[0])
-        );
-
-      }
-
-      lastIndex = pattern.lastIndex;
-    }
-
-    body.appendChild(
-      document.createTextNode(text.slice(lastIndex))
-    );
-
-    return body;
-  }
-
-  // Adiciona mensagens.
-  function add(role, text, sources = []) {
-
-    const box = document.createElement("div");
-
-    box.className =
-      "msg " + (role === "user" ? "user" : "assistant");
-
-    const label = document.createElement("div");
-
-    label.className = "label";
-
-    label.textContent =
-      role === "user" ? "TU" : "MGD AI";
-
-    const body = role === "user"
-      ? document.createElement("div")
-      : renderMessage(text);
-
-    if (role === "user") {
-      body.textContent = text;
-    }
-
-    box.append(label, body);
-
-    // Fontes da pesquisa.
-    if (sources.length) {
-
-      const area = document.createElement("div");
-
-      area.className = "sources";
-
-      const title = document.createElement("strong");
-
-      title.textContent = "FONTES CONSULTADAS";
-
-      area.append(title);
-
-      sources.forEach((source, index) => {
-
-        try {
-
-          const url = new URL(source.url);
-
-          if (!["http:", "https:"].includes(url.protocol)) {
-            return;
-          }
-
-          const link = document.createElement("a");
-
-          link.href = url.href;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-
-          link.textContent =
-            `[${index + 1}] ${source.title || url.hostname}`;
-
-          area.append(link);
-
-        } catch (error) {}
-
-      });
-
-      box.append(area);
-    }
-
-    chat.append(box);
-
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  // Verifica o backend.
-  async function health() {
-
-    try {
-
-      const response = await fetch(API + "/health");
-
-      if (!response.ok) {
-        throw new Error();
-      }
-
-      const data = await response.json();
-
-      document.querySelector("#dot")
-        .classList.toggle("ok", data.status === "ok");
-
-      document.querySelector("#status").textContent =
-        `Backend ${data.status} · Groq ${
-          data.groq_configured ? "OK" : "pendente"
-        } · Web ${
-          data.web_search_configured ? "OK" : "pendente"
-        }`;
-
-    } catch (error) {
-
-      document.querySelector("#status").textContent =
-        "Backend indisponível no momento.";
-
-    }
-  }
-
-  // Envio de mensagens.
-  form.addEventListener("submit", async event => {
-
-    event.preventDefault();
-
-    const message = input.value.trim();
-
-    if (!message || send.disabled) {
-      return;
-    }
-
-    add("user", message);
-
-    history.push({
-      role: "user",
-      content: message
-    });
-
-    input.value = "";
-
-    send.disabled = true;
-
-    send.textContent = "A PENSAR…";
-
-    const wait = document.createElement("div");
-
-    wait.className = "msg assistant";
-
-    wait.textContent =
-      "A MGD AI está a analisar a pergunta… 🧠";
-
-    chat.append(wait);
-
-    try {
-
-      const response = await fetch(API + "/chat", {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-          message,
-
-          history: history.slice(0, -1)
-
-        })
-
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      wait.remove();
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error || "Erro HTTP " + response.status
-        );
-
-      }
-
-      const reply = cleanText(
-        typeof data.reply === "string"
-          ? data.reply
-          : "Resposta inválida do backend."
-      );
-
-      history.push({
-        role: "assistant",
-        content: reply
-      });
-
-      add(
-        "assistant",
-        reply,
-        Array.isArray(data.sources) ? data.sources : []
-      );
-
-      if (data.searched) {
-
-        const notice = document.createElement("div");
-
-        notice.className = "notice";
-
-        notice.textContent =
-          "🌐 Esta resposta utilizou resultados da pesquisa Web.";
-
-        chat.append(notice);
-      }
-
-    } catch (error) {
-
-      wait.remove();
-
-      add(
-        "assistant",
-        "Não consegui concluir o pedido: " + error.message
-      );
-
-    } finally {
-
-      send.disabled = false;
-
-      send.textContent = "ENVIAR ➤";
-
-      input.focus();
-
-    }
-
-  });
-
-  // Enter envia a mensagem.
-  input.addEventListener("keydown", event => {
-
-    if (event.key === "Enter" && !event.shiftKey) {
-
-      event.preventDefault();
-
-      form.requestSubmit();
-
-    }
-
-  });
-
-  // Limpar conversa.
-  document.querySelector("#clear")
-    .addEventListener("click", () => {
-
-      history.length = 0;
-
-      chat.innerHTML = "";
-
-      add(
-        "assistant",
-        "Conversa limpa! 🎮 Faz a tua próxima pergunta."
-      );
-
-    });
-
-  health();
-
-})();
+// DADOS DE DEMONSTRAÇÃO: substituir por dados reais quando a API da Arena estiver disponível.
+let players=[
+ {nome:"Wayne MGD",tag:"WM",jogos:{freefire:18250,freefiremax:12400,pubg:9800,codm:15200,fortnite:7600},wins:142,kills:1840},
+ {nome:"Killer Moz",tag:"KM",jogos:{freefire:16400,freefiremax:14200,pubg:12100,codm:9800,fortnite:8900},wins:128,kills:1720},
+ {nome:"Shadow X",tag:"SX",jogos:{freefire:14800,freefiremax:9800,pubg:15400,codm:11200,fortnite:10200},wins:119,kills:1650},
+ {nome:"Neyma FF",tag:"NF",jogos:{freefire:13900,freefiremax:11200,pubg:8200,codm:13400,fortnite:9800},wins:105,kills:1480},
+ {nome:"Dino Pro",tag:"DP",jogos:{freefire:12100,freefiremax:8900,pubg:10200,codm:8900,fortnite:12100},wins:98,kills:1320},
+ {nome:"Luna Gamer",tag:"LG",jogos:{freefire:11200,freefiremax:12800,pubg:7600,codm:10200,fortnite:8900},wins:92,kills:1210},
+ {nome:"Ghost MZ",tag:"GM",jogos:{freefire:9800,freefiremax:7600,pubg:9800,codm:12400,fortnite:7600},wins:84,kills:1120},
+ {nome:"Turbo Boy",tag:"TB",jogos:{freefire:8700,freefiremax:9200,pubg:6800,codm:7600,fortnite:11200},wins:76,kills:980},
+ {nome:"Queen V",tag:"QV",jogos:{freefire:7600,freefiremax:8400,pubg:7200,codm:9800,fortnite:9800},wins:68,kills:890},
+ {nome:"Noob Master",tag:"NM",jogos:{freefire:5400,freefiremax:6200,pubg:4800,codm:5600,fortnite:6400},wins:45,kills:620}
+];
+const games=[{id:"freefire",nome:"🔥 Free Fire"},{id:"freefiremax",nome:"👑 Free Fire MAX"},{id:"pubg",nome:"🎯 PUBG Mobile"},{id:"codm",nome:"💥 COD Mobile"},{id:"fortnite",nome:"⚡ Fortnite"},{id:"global",nome:"🌍 GLOBAL"}];
+let currentGame="freefire";
+function mostrar(id){document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById(({home:'btnHome',ranking:'btnRanking',ai:'btnAI'})[id]).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(id==='ai')document.getElementById('message').focus();render();}
+function medalha(xp){if(xp>=15000)return{nome:'GRANDMASTER',emoji:'👑',cor:'#ffd700',next:20000};if(xp>=12000)return{nome:'MASTER',emoji:'💎',cor:'#00e5ff',next:15000};if(xp>=9000)return{nome:'DIAMANTE',emoji:'💠',cor:'#4da6ff',next:12000};if(xp>=6000)return{nome:'PLATINA',emoji:'✨',cor:'#e0e0e0',next:9000};if(xp>=3500)return{nome:'OURO',emoji:'🥇',cor:'#ffd700',next:6000};if(xp>=1500)return{nome:'PRATA',emoji:'🥈',cor:'#c0c0c0',next:3500};return{nome:'BRONZE',emoji:'🥉',cor:'#cd7f32',next:1500};}
+function getXP(p){return currentGame==='global'?Object.values(p.jogos).reduce((a,b)=>a+b,0):(p.jogos[currentGame]||0)}
+function renderTabs(){document.getElementById('tabs').innerHTML=games.map(g=>`<button class="tab ${g.id===currentGame?'active':''}" onclick="mudarJogo('${g.id}')">${g.nome}</button>`).join('')}
+function mudarJogo(id){currentGame=id;render()}
+function render(){renderTabs();const search=document.getElementById('search').value.toLowerCase();const sort=document.getElementById('sort').value;let lista=players.map(p=>({...p,xp:getXP(p),med:medalha(getXP(p))}));if(sort==='xp')lista.sort((a,b)=>b.xp-a.xp);if(sort==='name')lista.sort((a,b)=>a.nome.localeCompare(b.nome));if(sort==='wins')lista.sort((a,b)=>b.wins-a.wins);const filtered=search?lista.filter(p=>p.nome.toLowerCase().includes(search)):lista;
+const total=lista.reduce((s,p)=>s+p.xp,0),top=lista[0]?.xp||0;['totalPlayers','totalPlayersHome'].forEach(id=>document.getElementById(id).textContent=players.length);['totalXP','totalXPHome'].forEach(id=>document.getElementById(id).textContent=total.toLocaleString());['topXP','topXPHome'].forEach(id=>document.getElementById(id).textContent=top.toLocaleString());
+const top3=lista.slice(0,3),order=[top3[1],top3[0],top3[2]];const podiumHTML=order.map((p,i)=>{if(!p)return'<div></div>';const pos=p===top3[0]?1:p===top3[1]?2:3;return`<div class="pod ${pos===1?'first':''}"><div class="avatar">${p.tag}</div><b>${p.nome}</b><small>${pos}º LUGAR</small><div class="medal">${p.med.emoji} ${p.med.nome}</div><div class="xp">${p.xp.toLocaleString()} XP</div></div>`}).join('');document.getElementById('podium').innerHTML=podiumHTML;document.getElementById('podiumHome').innerHTML=podiumHTML;
+document.getElementById('gameCards').innerHTML=games.filter(g=>g.id!=='global').map(g=>{const best=[...players].sort((a,b)=>(b.jogos[g.id]||0)-(a.jogos[g.id]||0))[0];return`<div class="gcard" onclick="mostrar('ranking');mudarJogo('${g.id}')"><b>${g.nome}</b><span>Top demonstração: ${best.nome}</span><i>${best.jogos[g.id].toLocaleString()} XP → Ver ranking</i></div>`}).join('');
+document.getElementById('list').innerHTML=filtered.map((p,idx)=>{const prog=Math.min(100,p.xp/p.med.next*100);return`<div class="row ${idx===0&&!search?'top1':''}"><div class="pos ${idx===0&&!search?'top1':''}">${idx+1}</div><div class="mini" style="background:${idx===0?'#ffd700':idx===1?'#c0c0c0':idx===2?'#cd7f32':'#1e2338'};color:${idx<3?'#000':'#fff'}">${p.tag}</div><div class="info"><b>${p.nome}</b><span>${p.wins} Vitórias • ${p.kills} Kills</span><div class="progress"><i style="width:${prog}%"></i></div></div><div class="xp-box"><span class="badge" style="background:${p.med.cor}22;color:${p.med.cor};border:1px solid ${p.med.cor}">${p.med.emoji} ${p.med.nome}</span><b>${p.xp.toLocaleString()} XP</b><span>Faltam ${Math.max(0,p.med.next-p.xp)} XP p/ próximo</span></div></div>`}).join('');document.getElementById('liveText').textContent='REDLINE SYSTEM • '+games.find(g=>g.id===currentGame).nome;}
+document.getElementById('search').addEventListener('input',render);document.getElementById('sort').addEventListener('change',render);render();
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+// MGD AI: mantém a ligação ao backend independente existente.
+const API='https://mgd-arena-intelligence.onrender.com';const chat=document.getElementById('chat'),form=document.getElementById('form'),input=document.getElementById('message'),send=document.getElementById('send');const history=[];
+function cleanText(text){return String(text).split('*').join('')}
+function renderMessage(text){const body=document.createElement('div');text=cleanText(text);const pattern=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+)/g;let lastIndex=0,match;while((match=pattern.exec(text))!==null){body.appendChild(document.createTextNode(text.slice(lastIndex,match.index)));const label=match[1]||match[3];let rawUrl=match[2]||match[3],trailing='';if(!match[2])while(/[.,!?;:]$/.test(rawUrl)){trailing=rawUrl.slice(-1)+trailing;rawUrl=rawUrl.slice(0,-1)}try{const url=new URL(rawUrl);if(!['http:','https:'].includes(url.protocol))throw Error('URL inválida');const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent=label;body.appendChild(a);if(trailing)body.appendChild(document.createTextNode(trailing))}catch(e){body.appendChild(document.createTextNode(match[0]))}lastIndex=pattern.lastIndex}body.appendChild(document.createTextNode(text.slice(lastIndex)));return body}
+function addMessage(role,text,sources=[]){const box=document.createElement('div');box.className='msg '+(role==='user'?'user':'assistant');const label=document.createElement('div');label.className='msg-label';label.textContent=role==='user'?'TU':'MGD AI';const body=role==='user'?document.createElement('div'):renderMessage(text);if(role==='user')body.textContent=text;box.append(label,body);if(sources.length){const area=document.createElement('div');area.className='sources';const title=document.createElement('strong');title.textContent='FONTES CONSULTADAS';area.append(title);sources.forEach((source,index)=>{try{const url=new URL(source.url);if(!['http:','https:'].includes(url.protocol))return;const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent=`[${index+1}] ${source.title||url.hostname}`;area.append(a)}catch(e){}});box.append(area)}chat.append(box);chat.scrollTop=chat.scrollHeight}
+async function checkHealth(){try{const r=await fetch(API+'/health');if(!r.ok)throw Error();const d=await r.json();document.getElementById('aiStatus').textContent=d.status==='ok'?'● ONLINE':'● '+d.status;document.getElementById('aiStatus').style.color=d.status==='ok'?'#00ff88':'#ff6570'}catch(e){document.getElementById('aiStatus').textContent='● Backend indisponível';document.getElementById('aiStatus').style.color='#ff6570'}}
+form.addEventListener('submit',async e=>{e.preventDefault();const message=input.value.trim();if(!message||send.disabled)return;addMessage('user',message);history.push({role:'user',content:message});input.value='';send.disabled=true;send.textContent='A PENSAR…';const wait=document.createElement('div');wait.className='msg assistant';wait.textContent='A MGD AI está a analisar a pergunta… 🧠';chat.append(wait);chat.scrollTop=chat.scrollHeight;try{const response=await fetch(API+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,history:history.slice(0,-1)})});const data=await response.json().catch(()=>({}));wait.remove();if(!response.ok)throw Error(data.error||'Erro HTTP '+response.status);const reply=cleanText(typeof data.reply==='string'?data.reply:'Resposta inválida do backend.');history.push({role:'assistant',content:reply});addMessage('assistant',reply,Array.isArray(data.sources)?data.sources:[]);if(data.searched){const notice=document.createElement('div');notice.className='demo-note';notice.textContent='🌐 Esta resposta utilizou resultados da pesquisa Web.';chat.append(notice)}}catch(error){wait.remove();addMessage('assistant','Não consegui concluir o pedido: '+error.message)}finally{send.disabled=false;send.textContent='ENVIAR ➤';input.focus()}});
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});document.getElementById('clear').addEventListener('click',()=>{history.length=0;chat.innerHTML='';addMessage('assistant','Conversa limpa! 🎮 Faz a tua próxima pergunta.')});checkHealth();
 </script>
-
 </body>
 </html>
