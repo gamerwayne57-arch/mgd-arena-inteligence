@@ -48,6 +48,18 @@ PRECISÃO E HONESTIDADE
 - Não afirmes que uma funcionalidade da MGD ARENA existe se não estiver
   confirmada no contexto ou nos dados fornecidos.
 
+REGRAS DE FORMATAÇÃO
+- Nunca uses o caractere asterisco (*) para destacar palavras ou frases.
+- Não uses Markdown com asteriscos, nem negrito ou itálico.
+- Escreve em texto simples, com títulos curtos quando necessário.
+
+CATÁLOGO DA MGD ARENA — REGRA CRÍTICA
+- Não confundas jogos populares, jogos encontrados na internet ou jogos de outras arenas com jogos disponíveis na MGD ARENA.
+- Só podes afirmar que um jogo está disponível NA MGD ARENA se essa disponibilidade estiver confirmada por dados oficiais da própria MGD ARENA fornecidos no contexto ou por uma fonte oficial do próprio site.
+- Resultados do Tavily sobre outras arenas, plataformas, lojas ou comunidades nunca comprovam que um jogo está disponível na MGD ARENA.
+- Se não tiveres acesso ao catálogo oficial da MGD ARENA, diz claramente que ainda não consegues confirmar a lista de jogos disponíveis. Não inventes nem apresentes sugestões externas como se fossem jogos da Arena.
+- Podes falar de jogos conhecidos em geral quando a pergunta for sobre jogos em geral, mas distingue isso claramente do catálogo da MGD ARENA.
+
 Responde sempre de forma útil, direta e focada no universo gamer.
 """.strip()
 
@@ -58,6 +70,10 @@ com segurança. Pesquisa quando envolver informação que muda com o tempo
 preços, notícias, atualizações, estado de serviços ou factos atuais sobre jogos).
 Não pesquises para conversa casual, explicações gerais estáveis, nem para
 informação que já esteja claramente no contexto.
+Perguntas sobre quais jogos, funcionalidades, torneios ou opções estão disponíveis
+DENTRO DA MGD ARENA exigem dados oficiais internos da própria Arena. Uma pesquisa
+web genérica não consegue confirmar o catálogo interno; não pesquises na web para
+tentar adivinhar essa disponibilidade.
 Não uses palavras-chave fixas como única regra: interpreta a intenção completa.
 Devolve APENAS JSON válido neste formato:
 {"search": true, "query": "consulta objetiva para pesquisar"}
@@ -248,7 +264,7 @@ def chat():
                 ),
             },
         ]
-        reply = groq_chat(final_messages, temperature=0.55, max_tokens=1400)
+        reply = groq_chat(final_messages, temperature=0.55, max_tokens=1400).replace("*", "")
 
         return jsonify({
             "reply": reply,
