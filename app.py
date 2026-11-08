@@ -70,21 +70,31 @@ Responde sempre de forma útil, direta e focada no universo gamer.
 """.strip()
 
 DECISION_PROMPT = """
-Decide se a pergunta precisa de pesquisa atual na web para ser respondida
-com segurança. Pesquisa quando envolver informação que muda com o tempo
-(ex.: disponibilidade atual, links oficiais, requisitos/versões recentes,
-preços, notícias, atualizações, estado de serviços ou factos atuais sobre jogos).
-Não pesquises para conversa casual, explicações gerais estáveis, nem para
-informação que já esteja claramente no contexto.
-Perguntas sobre quais jogos, funcionalidades, torneios ou opções estão disponíveis
-DENTRO DA MGD ARENA exigem dados oficiais internos da própria Arena. Uma pesquisa
-web genérica não consegue confirmar o catálogo interno; não pesquises na web para
-tentar adivinhar essa disponibilidade.
-Não uses palavras-chave fixas como única regra: interpreta a intenção completa.
-Devolve APENAS JSON válido neste formato:
-{"search": true, "query": "consulta objetiva para pesquisar"}
-ou
-{"search": false, "query": ""}
+Analisa a mensagem mais recente do utilizador juntamente com o histórico completo.
+Usa Contextual Intelligence: compreende intenção, significado e contexto. Não
+decidas por palavras-chave isoladas, listas fixas ou correspondências superficiais.
+
+Decide se a pergunta precisa de pesquisa atual na web para ser respondida com
+segurança. Pesquisa quando a informação mudar com o tempo (disponibilidade
+pública atual, links oficiais, requisitos/versões recentes, preços, notícias,
+atualizações, estado de serviços ou factos atuais sobre jogos).
+Não pesquises para conversa casual, explicações gerais estáveis ou informação
+já confirmada no contexto.
+Perguntas sobre jogos, funcionalidades, torneios ou opções disponíveis DENTRO
+DA MGD ARENA exigem dados oficiais internos da própria Arena. Pesquisa web
+genérica não comprova o catálogo interno.
+
+Determina também o idioma em que a resposta deve ser escrita. Infere-o pelo
+significado e pela forma como o utilizador comunica na mensagem mais recente,
+considerando o histórico quando necessário. Se a mensagem mais recente estiver
+em inglês, responde em inglês; se estiver em português, responde em português;
+aplica o mesmo princípio a qualquer outro idioma que compreendas. Não escolhas
+português apenas porque instruções ou mensagens anteriores estão em português.
+Se houver mistura de idiomas, escolhe o idioma dominante da mensagem mais recente.
+
+Devolve APENAS JSON válido:
+{"search": false, "query": "", "response_language": "English"}
+O campo response_language deve conter o nome do idioma por extenso.
 """.strip()
 
 
@@ -134,19 +144,22 @@ def decide_search(history, message):
         *history,
         {"role": "user", "content": message},
     ]
-    raw = groq_chat(messages, temperature=0, max_tokens=150)
+    raw = groq_chat(messages, temperature=0, max_tokens=220)
     try:
         start = raw.find("{")
         end = raw.rfind("}") + 1
         decision = json.loads(raw[start:end])
         should_search = decision.get("search") is True
         query = decision.get("query", "")
+        language = decision.get("response_language", "")
         if not isinstance(query, str):
             query = ""
-        return should_search, query.strip()
+        if not isinstance(language, str) or not language.strip():
+            language = "the same language as the user's latest message"
+        return should_search, query.strip(), language.strip()
     except (ValueError, TypeError, json.JSONDecodeError):
-        # Em caso de decisão malformada, não pesquisar por suposição.
-        return False, ""
+        # Não inventar uma decisão nem impor português como idioma padrão.
+        return False, "", "the same language as the user's latest message"
 
 
 def tavily_search(query):
@@ -225,7 +238,7 @@ def chat():
     search_note = ""
 
     try:
-        should_search, search_query = decide_search(history, message)
+        should_search, search_query, response_language = decide_search(history, message)
 
         if should_search:
             if TAVILY_API_KEY and search_query:
@@ -259,7 +272,7 @@ def chat():
                 )
 
         final_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT + f"\\n\\nIDIOMA OBRIGATÓRIO DESTA RESPOSTA: {response_language}. Escreve toda a resposta neste idioma, sem mudar para português por causa do idioma das instruções ou do histórico."},
             *history,
             {
                 "role": "user",
