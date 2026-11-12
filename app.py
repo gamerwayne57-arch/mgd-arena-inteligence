@@ -17,7 +17,7 @@ CORS(app, origins="*")
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["15 per minute", "500 per day"],
+    default_limits=["20 per minute", "500 per day"],
     storage_uri="memory://",
 )
 
@@ -31,8 +31,8 @@ TAVILY_URL = "https://api.tavily.com/search"
 
 TTS_VOICE = "pt-BR-FranciscaNeural"
 
-REQUEST_TIMEOUT = 45
-MAX_HISTORY_MESSAGES = 12
+REQUEST_TIMEOUT = 40
+MAX_HISTORY_MESSAGES = 10 # Reduzido para aliviar o peso do pedido
 MAX_MESSAGE_LENGTH = 6000
 
 SYSTEM_PROMPT = """
@@ -50,24 +50,20 @@ ADAPTACAO AO UTILIZADOR (PERSONALIDADE):
 
 IDIOMA E FORMATACAO ESTRITA (REGRA CRITICA):
 - Responde SEMPRE no idioma da mensagem mais recente do utilizador.
-- E TERMINANTEMENTE PROIBIDO usar asteriscos (*) ou cerquilhas (#) para destacar texto. Nao uses negrito Markdown. Usa texto simples, quebras de linha e maiusculas se precisares de enfase.
+- E TERMINANTEMENTE PROIBIDO usar asteriscos (*) ou cerquilhas (#) para destacar texto.
 - Para desenhar tabelas, usa a formatacao Markdown padrao com barras verticais (|), sem asteriscos.
 - Para codigo, usa blocos delimitados por tres crases e identifica a linguagem (ex: ```python).
 
 PRECISAO E HONESTIDADE (CRITICO):
 - NUNCA inventes factos, links ou resultados.
-- Se receberes o conteudo de um site, baseia-te ESTRITAMENTE no texto fornecido. Se a resposta nao estiver no texto, diz que nao encontras-te a informacao no link.
-- Se o sistema disser que falhou a leitura de um link, informa o utilizador que nao consegues aceder ao conteudo e pede para ele copiar e colar o texto.
+- Se receberes o conteudo de um site, baseia-te ESTRITAMENTE no texto fornecido.
+- Se o sistema disser que falhou a leitura de um link, informa o utilizador que nao consegues aceder ao conteudo.
 - Se nao souberes algo, diz claramente.
 """
 
 DECISION_PROMPT = """
 Analisa a mensagem mais recente do utilizador.
-Decide se a pergunta precisa de pesquisa atual na web (noticias, precos, eventos recentes, estado de servicos).
-Nao pesquises para conversa casual, codigo ou conhecimento geral estavel.
-
-Determina tambem o idioma em que a resposta deve ser escrita.
-
+Decide se a pergunta precisa de pesquisa atual na web.
 Devolve APENAS JSON valido:
 {"search": false, "query": "", "response_language": "Portuguese"}
 """
@@ -75,14 +71,19 @@ Devolve APENAS JSON valido:
 def groq_chat(messages, model, temperature=0.4, max_tokens=2048):
     if not GROQ_API_KEY:
         raise RuntimeError("A chave GROQ_API_KEY nao esta configurada.")
+    
     response = requests.post(
         GROQ_URL,
         headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
         json={"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens},
         timeout=REQUEST_TIMEOUT,
     )
+    
+    if response.status_code == 429:
+        raise RuntimeError("Limite de pedidos da Groq atingido. Aguarda um momento.")
     if response.status_code >= 400:
-        raise RuntimeError(f"Erro Groq ({response.status_code}): {response.text[:500]}")
+        raise RuntimeError(f"Erro Groq ({response.status_code}).")
+        
     data = response.json()
     return data["choices"][0]["message"]["content"].strip()
 
@@ -109,7 +110,7 @@ def decide_search(history, message):
         {"role": "user", "content": message},
     ]
     try:
-        raw = groq_chat(messages, GROQ_MODEL_TEXT, temperature=0, max_tokens=150)
+        raw = groq_chat(messages, GROQ_MODEL_TEXT, temperature=0, max_tokens=100)
         start = raw.find("{")
         end = raw.rfind("}") + 1
         decision = json.loads(raw[start:end])
@@ -129,7 +130,7 @@ def tavily_search(query):
             TAVILY_URL,
             headers={"Content-Type": "application/json"},
             json={"api_key": TAVILY_API_KEY, "query": query, "search_depth": "basic", "max_results": 3, "include_answer": False},
-            timeout=REQUEST_TIMEOUT,
+            timeout=15,
         )
         if response.status_code >= 400:
             return []
@@ -141,12 +142,12 @@ def tavily_search(query):
 def ler_site(url):
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        res = requests.get(url, headers=headers, timeout=15)
+        res = requests.get(url, headers=headers, timeout=10)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, 'html.parser')
         for script in soup(["script", "style", "nav", "footer", "header"]):
             script.decompose()
-        return soup.get_text(separator=' ', strip=True)[:4000]
+        return soup.get_text(separator=' ', strip=True)[:3000]
     except Exception:
         return None
 
@@ -155,22 +156,14 @@ def limpar_url(url):
 
 @app.get("/")
 def home():
-    return jsonify({
-        "service": "MGD AI Backend",
-        "status": "online",
-        "features": ["text", "vision", "tts", "tavily", "core_live"]
-    })
+    return jsonify({"status": "online"})
 
 @app.get("/health")
 def health():
-    return jsonify({
-        "status": "ok",
-        "groq_configured": bool(GROQ_API_KEY),
-        "tavily_configured": bool(TAVILY_API_KEY),
-    })
+    return jsonify({"status": "ok"})
 
 @app.post("/chat")
-@limiter.limit("15 per minute")
+@limiter.limit("20 per minute")
 def chat():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
@@ -180,24 +173,17 @@ def chat():
     if not message and not image_b64:
         return jsonify({"error": "Mensagem vazia."}), 400
 
-    if not GROQ_API_KEY:
-        return jsonify({"reply": "Sistema offline.", "sources": [], "activities": []}), 503
-
     sources = []
-    searched = False
     activities = []
     model_to_use = GROQ_MODEL_TEXT
     final_message = message
     source_context = ""
 
     try:
-        # 1. Processar Imagem
         if image_b64:
             activities.extend(["A Analisar Imagem...", "Analisou a Imagem"])
             model_to_use = GROQ_MODEL_VISION
             final_message = message if message else "O que ha nesta imagem?"
-            
-        # 2. Processar Link
         else:
             urls = re.findall(r'(https?://[^\s]+)', message)
             if urls:
@@ -206,27 +192,21 @@ def chat():
                 conteudo = ler_site(url_alvo)
                 if conteudo:
                     activities.extend(["Extraiu o Conteudo", "A Resumir", "Resumiu o Conteudo"])
-                    final_message = f"O utilizador enviou o link {url_alvo}. Conteudo extraido:\n\n{conteudo}\n\nCom base APENAS neste conteudo, responde ao utilizador: {message}. Se a resposta nao estiver no conteudo, diz que nao encontras-te a informacao no link."
+                    final_message = f"O utilizador enviou o link {url_alvo}. Conteudo:\n\n{conteudo}\n\nResponde: {message}."
                 else:
                     activities.append("Falha ao extrair conteudo")
-                    final_message = f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura automatica. Informa o utilizador que nao consegues aceder ao conteudo e pede para ele copiar e colar o texto. E TERMINANTEMENTE PROIBIDO inventar o que esta no link. Responde ao utilizador: {message}"
-
-            # 3. Pesquisa Web (se nao for imagem nem link)
+                    final_message = f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura. Pede para ele copiar e colar o texto. PROIBIDO inventar."
             elif not image_b64:
-                should_search, search_query, response_language = decide_search(history, message)
+                should_search, search_query, _ = decide_search(history, message)
                 if should_search and search_query and TAVILY_API_KEY:
                     activities.extend(["A pesquisar na Web...", "Pesquisou na Web"])
                     sources = tavily_search(search_query)
                     if sources:
                         activities.append(f"{len(sources)} Resultados Encontrados")
-                        searched = True
-                        source_context = "\n\nFONTES ENCONTRADAS NA WEB:\n"
+                        source_context = "\n\nFONTES:\n"
                         for i, s in enumerate(sources, 1):
                             source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
-                    else:
-                        activities.append("Nenhum resultado encontrado")
 
-        # 4. Preparar Mensagens para a IA
         final_messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             *history
@@ -246,13 +226,9 @@ def chat():
                 "content": final_message + source_context
             })
 
-        # 5. Chamar a IA
         reply = groq_chat(final_messages, model_to_use, temperature=0.6, max_tokens=2048)
-        
-        # Limpeza de segurança
         reply = reply.replace("*", "").replace("#", "")
 
-        # 6. CORREÇÃO DO CORE LIVE: Só mostra atividade de código se a resposta contiver código!
         if "```" in reply:
             activities.extend(["A escrever código...", "Escreveu Código", "A Verificar código...", "Verificou Código"])
 
@@ -263,10 +239,10 @@ def chat():
         })
 
     except requests.Timeout:
-        return jsonify({"reply": "A ligacao demorou demasiado.", "sources": [], "activities": activities}), 504
+        return jsonify({"reply": "O tempo de resposta esgotou. Tenta novamente.", "sources": [], "activities": activities}), 504
     except Exception as e:
         app.logger.error(f"Erro no chat: {e}")
-        return jsonify({"reply": "Erro tecnico.", "sources": [], "activities": activities}), 502
+        return jsonify({"reply": f"Erro interno: {str(e)}", "sources": [], "activities": activities}), 500
 
 @app.post("/tts")
 @limiter.limit("20 per minute")
@@ -293,9 +269,6 @@ def tts():
         asyncio.set_event_loop(loop)
         audio_bytes = loop.run_until_complete(generate_audio())
         loop.close()
-
-        if not audio_bytes:
-            raise RuntimeError("Falha ao gerar audio.")
 
         return send_file(io.BytesIO(audio_bytes), mimetype="audio/mpeg", as_attachment=False)
     except Exception as e:
