@@ -25,15 +25,20 @@ limiter = Limiter(
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "").strip()
 
+# O modelo principal para respostas complexas
 GROQ_MODEL_TEXT = "openai/gpt-oss-120b"
+# O modelo de visão para imagens
 GROQ_MODEL_VISION = "qwen/qwen3.8-27b"
+# O modelo rápido para decisões de contexto (não gasta a cota do principal)
+GROQ_MODEL_DECISION = "llama-3.1-8b-instant"
+
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 TAVILY_URL = "https://api.tavily.com/search"
 
 TTS_VOICE = "pt-BR-FranciscaNeural"
 
 REQUEST_TIMEOUT = 40
-MAX_HISTORY_MESSAGES = 6
+MAX_HISTORY_MESSAGES = 16  # Aumentado para manter o contexto real
 MAX_MESSAGE_LENGTH = 4000
 
 SYSTEM_PROMPT = """
@@ -47,10 +52,23 @@ Para tabelas, usa barras verticais (|). Para codigo, usa blocos delimitados por 
 NUNCA inventes factos, links ou resultados. Se receberes o conteudo de um site, baseia-te estritamente no texto fornecido. Se nao souberes, diz claramente.
 """
 
+DECISION_PROMPT = """
+Analisa a mensagem mais recente do utilizador juntamente com o historico completo.
+Usa Contextual Intelligence: compreende a intencao, o significado e o contexto. Nao decidas por palavras-chave isoladas.
+
+Decide se a pergunta precisa de pesquisa atual na web para ser respondida com seguranca.
+Pesquisa quando a informacao mudar com o tempo (noticias, precos, disponibilidade, versoes recentes, lancamentos, estado de servicos, eventos atuais, resultados desportivos, cotacoes).
+Nao pesquises para conversa casual, explicacoes gerais, matematica, codigo, traducao, escrita criativa ou informacao ja confirmada no historico.
+
+Determina tambem o idioma em que a resposta deve ser escrita.
+Devolve APENAS JSON valido:
+{"search": true/false, "query": "termo de pesquisa", "response_language": "Portuguese"}
+"""
+
 def groq_chat_with_retry(messages, model, temperature=0.4, max_tokens=2048, retries=3):
-    """
-    Chama a API da Groq com lógica de retry e backoff exponencial para erros 429.
-    """
+    if not GROQ_API_KEY:
+        raise RuntimeError("A chave GROQ_API_KEY nao esta configurada.")
+        
     for attempt in range(retries):
         try:
             response = requests.post(
@@ -61,16 +79,11 @@ def groq_chat_with_retry(messages, model, temperature=0.4, max_tokens=2048, retr
             )
 
             if response.status_code == 429:
-                # Tenta obter o cabeçalho Retry-After da Groq
                 retry_after = response.headers.get("Retry-After")
-                if retry_after:
-                    wait_time = int(retry_after)
-                else:
-                    # Backoff exponencial: 2s, 4s, 8s
-                    wait_time = 2 ** (attempt + 1)
-
+                wait_time = int(retry_after) if retry_after else 2 ** (attempt + 1)
+                
                 if attempt < retries - 1:
-                    app.logger.warning(f"Rate limit atingido. A aguardar {wait_time} segundos (tentativa {attempt+1}/{retries})...")
+                    app.logger.warning(f"Rate limit atingido. A aguardar {wait_time}s...")
                     time.sleep(wait_time)
                     continue
                 else:
@@ -104,6 +117,27 @@ def clean_history(history):
             if content:
                 cleaned.append({"role": role, "content": content})
     return cleaned
+
+def decide_search(history, message):
+    """Usa um modelo rápido para ler o contexto e decidir se precisa de pesquisa."""
+    messages = [
+        {"role": "system", "content": DECISION_PROMPT},
+        *history,
+        {"role": "user", "content": message}
+    ]
+    try:
+        raw = groq_chat_with_retry(messages, GROQ_MODEL_DECISION, temperature=0, max_tokens=150)
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+        decision = json.loads(raw[start:end])
+        return (
+            decision.get("search") is True,
+            str(decision.get("query", "")).strip(),
+            str(decision.get("response_language", "Portuguese")).strip()
+        )
+    except Exception:
+        # Se a decisão falhar por limite de cota, assume que não precisa de pesquisa para não bloquear o utilizador
+        return False, "", "Portuguese"
 
 def tavily_search(query):
     if not TAVILY_API_KEY:
@@ -174,7 +208,6 @@ def chat():
     source_context = ""
 
     try:
-        # ETAPA 1: Verificar se é necessário pesquisar (apenas se não for imagem/link)
         if image_b64:
             activities.extend(["A Analisar Imagem...", "Analisou a Imagem"])
             model_to_use = GROQ_MODEL_VISION
@@ -192,19 +225,20 @@ def chat():
                     activities.append("Falha ao extrair conteudo")
                     final_message = f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura. Pede para ele copiar e colar o texto. PROIBIDO inventar."
             else:
-                # Pesquisa na web apenas se a mensagem contiver palavras-chave que sugiram necessidade de informação atual
-                # Isto reduz o número de pedidos à Groq (evita a chamada de decisão)
-                precisa_pesquisar = bool(re.search(r"(noticias|hoje|agora|preco|tempo|clima|resultado|jogo|versao|atual|recente|2026|2025)", message, re.IGNORECASE))
-                if precisa_pesquisar and TAVILY_API_KEY:
+                # INTELIGÊNCIA CONTEXTUAL RESTAURADA AQUI
+                should_search, search_query, response_language = decide_search(history, message)
+                
+                if should_search and search_query and TAVILY_API_KEY:
                     activities.extend(["A pesquisar na Web...", "Pesquisou na Web"])
-                    sources = tavily_search(message)
+                    sources = tavily_search(search_query)
                     if sources:
                         activities.append(f"{len(sources)} Resultados Encontrados")
-                        source_context = "\n\nFONTES:\n"
+                        source_context = "\n\nFONTES ENCONTRADAS NA WEB:\n"
                         for i, s in enumerate(sources, 1):
                             source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
+                    else:
+                        activities.append("Nenhum resultado encontrado")
 
-        # ETAPA 2: Chamar a IA com retry
         final_messages = [{"role": "system", "content": SYSTEM_PROMPT}, *history]
 
         if image_b64:
