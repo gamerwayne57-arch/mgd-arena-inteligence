@@ -2,201 +2,657 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#080a12">
-<title>MGD ARENA | REDLINE ELITE GAMING</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>MGD AI | REDLINE</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--red:#ff1e2d;--dark:#080a12;--card:#111424;--gold:#ffd700;--line:#292d43;--txt:#fff;--muted:#9a9eae;--green:#00ff88}
-body{background:var(--dark);color:var(--txt);font-family:Inter,sans-serif;overflow-x:hidden;min-height:100vh}
-body:before{content:"";position:fixed;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(255,30,45,.2),transparent),radial-gradient(600px 300px at 90% 20%,rgba(255,30,45,.08),transparent);pointer-events:none;z-index:-1}
-header{padding:18px 16px 12px;text-align:center;position:relative;z-index:2}
-.logo{font-family:Orbitron,sans-serif;font-size:clamp(25px,6vw,36px);font-weight:900;letter-spacing:2px}.logo span{color:var(--red)}
-.logo small{display:block;font-size:10px;letter-spacing:5px;color:#aaa;margin-top:3px}.logo small b{color:#fff}
-.live{display:inline-flex;gap:8px;align-items:center;background:#1a1e30;border:1px solid var(--line);padding:6px 12px;border-radius:99px;font-size:11px;margin-top:10px;color:#c5c7d1}
-.dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green);animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.4}}
-nav{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));position:fixed;left:0;right:0;bottom:0;width:100%;background:rgba(8,10,18,.97);backdrop-filter:blur(14px);z-index:1000;border-top:1px solid #3a2028;box-shadow:0 -8px 28px rgba(0,0,0,.45)}
-.nav-btn{flex:1;padding:12px 6px;border-radius:12px;border:1px solid var(--line);background:#15182a;color:#fff;font-weight:800;font-family:Orbitron,sans-serif;font-size:clamp(10px,2.8vw,13px);cursor:pointer}
-.nav-btn.active{background:var(--red);border-color:var(--red);box-shadow:0 0 18px rgba(255,30,45,.4)}
-main{max-width:1000px;margin:auto;padding:0 14px calc(105px + env(safe-area-inset-bottom))}section{display:none}section.active{display:block}
-.hero{background:linear-gradient(135deg,#1a0a0d,#111424);border:1px solid #3b2029;border-radius:20px;padding:22px;text-align:center;margin-top:14px}
-.hero h1{font-family:Orbitron,sans-serif;font-size:clamp(22px,5vw,30px);line-height:1.25}.hero h1 span{color:var(--red)}.hero p{color:#aaa;font-size:13px;margin:10px 0 16px;line-height:1.6}
-.btn{width:100%;background:var(--red);border:0;color:#fff;padding:14px;border-radius:14px;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:.5px;cursor:pointer}.btn-outline{background:transparent;border:1px solid var(--line);margin-top:8px}.btn:disabled{opacity:.55;cursor:wait}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.stat{background:var(--card);border:1px solid #222747;border-radius:16px;padding:12px 6px;text-align:center}.stat b{font-family:Orbitron,sans-serif;font-size:clamp(16px,4vw,21px);display:block}.stat span{font-size:10px;color:#999}
-.home-title{font-family:Orbitron,sans-serif;font-size:14px;margin:20px 0 10px}.game-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gcard{background:var(--card);border:1px solid #222747;border-radius:16px;padding:12px;cursor:pointer;min-width:0}.game-title{display:flex;align-items:center;gap:10px;min-width:0}.game-title b{font-size:12px;line-height:1.3}.game-icon{width:48px;height:48px;flex:0 0 48px;border-radius:12px;object-fit:cover;background:#202438;border:1px solid #3a4058;box-shadow:0 3px 12px #0007}.game-icon.fallback{display:grid;place-items:center;font-size:24px;object-fit:contain}.gcard span{display:block;font-size:11px;color:#999;margin-top:8px}.gcard i{display:block;font-style:normal;color:var(--gold);font-weight:800;font-size:11px;margin-top:7px}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+    --red: #d90000; --red-hover: #b30000; --bg: #ffffff;
+    --chat-bg: #f8f9fa; --text: #1a1a1a; --text-light: #666666;
+    --border: #e5e5e5; --sidebar-w: 280px;
+}
+body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 10px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:7px;white-space:nowrap;padding:7px 11px;border-radius:99px;background:#15182a;border:1px solid var(--line);cursor:pointer;font-weight:700;font-size:12px;color:#fff}.tab-icon{width:27px;height:27px;border-radius:8px;object-fit:cover;background:#202438;border:1px solid #41465b;flex:0 0 27px}.tab-emoji{font-size:19px;line-height:1}.tab.active{background:var(--red);border-color:var(--red);box-shadow:0 0 15px rgba(255,30,45,.35)}
-.podium{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:8px;padding:14px 0;align-items:end}.pod{border-radius:16px;padding:12px 5px;text-align:center;border:1px solid var(--line);background:#111424;min-width:0}.pod.first{background:linear-gradient(180deg,#2a1a00,#12141f);border-color:var(--gold);transform:translateY(-4px)}.avatar{width:48px;height:48px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-weight:900;font-size:16px;background:#30364d}.pod.first .avatar{background:var(--gold);color:#000;box-shadow:0 0 18px #ffd700}.pod b{font-size:11px;display:block;overflow-wrap:anywhere}.pod small{font-size:9px;color:#aaa}.medal{font-size:10px;margin-top:5px}.xp{color:var(--gold);font-weight:800;font-size:11px;margin-top:4px}
-.controls{display:flex;gap:8px;padding:4px 0 12px}.controls input{flex:1;min-width:0;background:#12141f;border:1px solid var(--line);color:#fff;padding:11px 12px;border-radius:12px;outline:none}.controls select{background:#12141f;border:1px solid var(--line);color:#fff;padding:11px;border-radius:12px;max-width:130px}.list{display:flex;flex-direction:column;gap:9px}.row{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid #222747;border-radius:15px;padding:11px}.row.top1{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.12)}.pos{font-family:Orbitron,sans-serif;font-weight:900;width:25px;text-align:center;font-size:15px;flex-shrink:0}.pos.top1{color:var(--gold)}.mini{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;background:#1e2338;flex-shrink:0;font-size:11px}.info{flex:1;min-width:0}.info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.info span{font-size:10px;color:#999}.badge{font-size:9px;padding:3px 6px;border-radius:99px;font-weight:800;white-space:nowrap}.xp-box{text-align:right;min-width:90px}.xp-box b{color:var(--gold);font-size:12px;display:block}.xp-box span{font-size:9px;color:#999;display:block}.progress{height:4px;background:#222747;border-radius:99px;margin-top:5px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--red),#ff7a00);border-radius:99px}
-.demo-note{margin:12px 0;padding:10px 12px;border:1px solid #6b4d17;background:#211a0b;color:#e7c878;border-radius:10px;font-size:11px;line-height:1.5}
-/* AI */
-.ai-panel{margin-top:14px;background:linear-gradient(145deg,#170d13,#101321);border:1px solid #49212a;border-radius:18px;overflow:hidden}.ai-head{padding:15px;border-bottom:1px solid #39202a;display:flex;align-items:center;gap:10px}.ai-icon{width:38px;height:38px;border-radius:12px;background:var(--red);display:grid;place-items:center;font-size:20px;box-shadow:0 0 16px #ff1e2d55}.ai-head b{font-family:Orbitron,sans-serif;font-size:13px}.ai-head small{display:block;color:#999;font-size:10px;margin-top:3px}.ai-status{margin-left:auto;color:#aaa;font-size:10px}.ai-chat{height:min(48vh,430px);min-height:260px;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:11px}.msg{max-width:94%;padding:11px 13px;border:1px solid var(--line);border-radius:13px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55}.msg.assistant{align-self:flex-start;background:#171725}.msg.user{align-self:flex-end;background:#35151d;border-color:#71303a}.msg-label{font-size:9px;letter-spacing:1px;color:#ff6570;font-weight:800;margin-bottom:5px}.msg.user .msg-label{color:#ffb3b8}.msg a,.sources a{color:#ff7c85;text-decoration:underline;overflow-wrap:anywhere}.sources{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:11px}.sources strong{display:block;color:#ff7c85}.sources a{display:block;margin-top:5px}.ai-form{padding:12px;border-top:1px solid #39202a;background:#0c0d17}.ai-controls{display:flex;gap:8px}.ai-controls textarea{flex:1;min-width:0;min-height:48px;max-height:120px;resize:vertical;background:#171725;color:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;font:inherit;font-size:13px}.ai-controls button{background:var(--red);border:0;border-radius:11px;color:#fff;padding:0 16px;font-weight:800;cursor:pointer}.ai-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:#888;font-size:10px}.clear{background:transparent!important;border:1px solid var(--line)!important;padding:5px 9px!important;color:#aaa!important;border-radius:8px!important}
-footer{padding:18px 10px calc(105px + env(safe-area-inset-bottom));text-align:center;color:#666;font-size:10px}
-@media(max-width:560px){main{padding:0 11px calc(105px + env(safe-area-inset-bottom))}.controls{flex-direction:column}.controls select{max-width:none;min-height:40px}.row{gap:7px;padding:9px 7px}.xp-box{min-width:80px}.pod{padding:10px 3px}.ai-controls{flex-direction:column}.ai-controls button{height:43px}.nav-btn{padding:11px 3px}}
+/* CABEÇALHO FIXO */
+header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.menu-btn { position: absolute; left: 15px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 5px; }
+.menu-btn span { display: block; width: 25px; height: 3px; background-color: var(--red); border-radius: 3px; }
+.header-title { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
 
-/* MGD ARENA v2 — categorias e modo solo */
-.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
-.category-card{background:linear-gradient(145deg,#171a2b,#101321);border:1px solid #30344c;border-radius:16px;padding:14px;text-align:left;color:#fff;cursor:pointer;min-height:88px}
-.category-card.active{border-color:var(--red);box-shadow:0 0 16px #ff1e2d33}
-.category-card .cat-emoji{font-size:24px;display:block;margin-bottom:7px}.category-card b{font-family:Orbitron,sans-serif;font-size:11px}.category-card small{display:block;color:#999;font-size:10px;margin-top:5px}
-.catalog-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:18px 0 10px}.catalog-head small{color:#999;font-size:10px}
-.game-status{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:99px;background:#272033;color:#ffc56b;font-size:9px;font-weight:800}
-.solo-panel{margin:14px 0;background:linear-gradient(145deg,#171a2b,#101321);border:1px solid #383047;border-radius:17px;padding:14px}
-.solo-top{display:flex;align-items:center;gap:10px}.solo-avatar{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ff1e2d,#76121d);display:grid;place-items:center;font-family:Orbitron,sans-serif;font-weight:900;font-size:15px}
-.solo-top b{font-family:Orbitron,sans-serif;font-size:13px}.solo-top small{display:block;color:#aaa;font-size:10px;margin-top:4px}
-.solo-xp{display:flex;justify-content:space-between;gap:8px;margin:14px 0 7px;font-size:11px}.solo-xp strong{color:var(--gold)}
-.solo-progress{height:9px;border-radius:99px;background:#292d43;overflow:hidden}.solo-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--red),#ff9b35);border-radius:99px}
-.xp-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.xp-actions button{background:#25151d;border:1px solid #74303a;color:#fff;border-radius:10px;padding:11px 4px;font-weight:800;font-size:11px;cursor:pointer}.solo-tools{display:flex;gap:8px;margin-top:9px}.solo-tools button{flex:1;background:#15182a;border:1px solid var(--line);color:#ddd;border-radius:10px;padding:10px 5px;font-size:10px;cursor:pointer}
-.empty-state{padding:22px 14px;text-align:center;color:#aaa;background:#111424;border:1px dashed #393d54;border-radius:14px;font-size:12px;line-height:1.6}
-.game-detail{display:flex;align-items:center;gap:12px;background:#15182a;border:1px solid var(--line);padding:13px;border-radius:15px;margin:12px 0}
-.game-detail .game-icon{width:54px;height:54px;flex-basis:54px}.game-detail b{font-size:13px}.game-detail small{display:block;color:#aaa;font-size:10px;margin-top:5px}
-@media(max-width:560px){.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.xp-actions button{font-size:10px}}
+/* SIDEBAR */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1001; }
+.overlay.open { opacity: 1; pointer-events: auto; }
+.sidebar { position: fixed; top: 0; left: -var(--sidebar-w); bottom: 0; width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border); z-index: 1002; transition: transform 0.3s ease; display: flex; flex-direction: column; padding: 15px; transform: translateX(-100%); }
+.sidebar.open { transform: translateX(0); }
+.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.sidebar-header h2 { font-size: 14px; color: var(--text-light); }
+.close-btn { background: none; border: none; font-size: 24px; color: var(--text-light); cursor: pointer; }
+.new-chat-btn { background: var(--red); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-bottom: 15px; width: 100%; }
+.history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+.history-item { padding: 10px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text); background: var(--chat-bg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; }
+.history-item:hover, .history-item.active { background: #fff0f0; border-color: #ffcccc; }
 
+/* EXPORTAR / IMPORTAR */
+.data-actions { display: flex; gap: 5px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
+.data-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 12px; cursor: pointer; font-weight: 600; text-align: center; }
+.data-btn:hover { background: var(--chat-bg); }
+
+/* AREA DE CHAT */
+.chat-container { flex: 1; overflow-y: auto; padding: 80px 15px 100px 15px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+
+/* MENSAGENS */
+.msg-row { display: flex; flex-direction: column; width: 100%; max-width: 800px; margin: 0 auto; }
+.msg-row.user { align-items: flex-end; }
+.msg-row.ai { align-items: flex-start; }
+.msg-image { max-width: 80%; max-height: 250px; border-radius: 16px; margin-bottom: 8px; object-fit: cover; }
+.bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; max-width: 85%; word-wrap: break-word; }
+.msg-row.user .bubble { background: var(--red); color: white; border-bottom-right-radius: 4px; }
+.msg-row.ai .bubble { background: var(--chat-bg); color: var(--text); border-bottom-left-radius: 4px; }
+
+/* CORE LIVE */
+.core-live { font-size: 13px; color: #888; font-style: italic; padding: 5px 0; display: flex; flex-direction: column; gap: 4px; }
+.core-live-step::before { content: '• '; color: var(--red); }
+.processing-time { font-size: 12px; color: #888; margin-bottom: 8px; padding-left: 5px; display: flex; align-items: center; gap: 5px; }
+.processing-time::after { content: '›'; font-size: 16px; color: #ccc; }
+
+/* BOTOES */
+.actions { display: flex; gap: 10px; margin-top: 10px; }
+.action-btn { background: none; border: 1px solid var(--border); border-radius: 20px; color: var(--text-light); padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.action-btn:hover { background: #eee; }
+
+/* =========================================
+   CÓDIGO E TABELAS (CORRIGIDO)
+   ========================================= */
+.code-container { 
+    background: #1e1e1e; 
+    border-radius: 10px; 
+    margin: 10px 0; 
+    max-width: 100%;
+    overflow: hidden; 
+    border: 1px solid #333;
+}
+.code-header { 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: #2d2d2d; padding: 8px 15px; color: #ccc; font-size: 12px; 
+    border-bottom: 1px solid #444;
+}
+.copy-btn { background: #444; border: none; color: #fff; border-radius: 5px; padding: 4px 10px; cursor: pointer; font-size: 11px; font-weight: 600; }
+.copy-btn:hover { background: #555; }
+
+/* Forçar fundo escuro e scroll no código */
+pre { 
+    margin: 0; 
+    padding: 0; 
+    overflow-x: auto; 
+    max-width: 100%;
+    background: #1e1e1e !important; 
+}
+code { 
+    display: block; 
+    padding: 15px; 
+    font-family: monospace; 
+    font-size: 14px; 
+    background: transparent !important; 
+    white-space: pre; 
+    color: #f8f8f2;
+}
+
+/* TABELAS */
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+th { background: #f1f1f1; font-weight: 600; }
+
+/* INPUT AREA */
+.input-area { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); z-index: 1000; display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
+#image-preview-container { display: none; padding: 10px 15px 0 15px; }
+.image-preview-box { display: inline-flex; position: relative; background: var(--bg); border-radius: 12px; padding: 5px; border: 1px solid var(--border); }
+.image-preview-box img { height: 60px; width: 60px; object-fit: cover; border-radius: 8px; }
+.cancel-img-btn { position: absolute; top: -8px; right: -8px; background: #333; color: white; border: 2px solid white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.input-row { padding: 10px 15px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 10px; }
+.plus-btn { background: var(--red); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; flex-shrink: 0; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.input-box { flex: 1; background: var(--chat-bg); border-radius: 20px; padding: 10px 15px; display: flex; align-items: center; border: 1px solid var(--border); }
+.input-box input[type="text"] { width: 100%; border: none; background: transparent; outline: none; font-size: 15px; font-family: inherit; }
+.send-btn { background: var(--red); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; flex-shrink: 0; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.send-btn svg { width: 18px; height: 18px; fill: white; }
+
+/* ERRO DE REDE */
+.network-error { position: fixed; top: 65px; left: 50%; transform: translateX(-50%); background: rgba(50, 50, 50, 0.85); color: white; backdrop-filter: blur(5px); padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 2000; display: none; text-align: center; width: max-content; max-width: 90%; }
+.network-error.show { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">MGD <span>ARENA</span><small>ELITE <b>GAMING</b> SYSTEM</small></div>
-  <div class="live"><span class="dot"></span><span id="liveText">REDLINE SYSTEM • ONLINE</span> • <span id="clock">00:00:00</span></div>
-</header>
-<nav>
-  <button class="nav-btn active" id="btnHome" onclick="mostrar('home')">🏠 HOME</button>
-  <button class="nav-btn" id="btnRanking" onclick="mostrar('ranking')">🏆 RANKING</button>
-  <button class="nav-btn" id="btnAI" onclick="mostrar('ai')">🤖 MGD AI</button>
-</nav>
-<main>
-<section id="home" class="active">
-  <div class="hero">
-    <h1>BEM-VINDO À<br><span>MGD ARENA</span></h1>
-    <p>O teu espaço gamer. Escolhe o teu jogo, acompanha a tua evolução e prepara-te para fazer história.</p>
-    <button class="btn" onclick="mostrar('ranking')">🎮 EXPLORAR JOGOS →</button>
-    <button class="btn btn-outline" onclick="mostrar('ai')">🤖 FALAR COM A MGD AI</button>
-  </div>
-  <div class="stats">
-    <div class="stat"><b id="totalPlayersHome">1</b><span>PERFIL DE TESTE</span></div>
-    <div class="stat"><b id="totalXPHome">0</b><span>XP DE TESTE</span></div>
-    <div class="stat"><b id="topXPHome">0</b><span>TEU XP</span></div>
-  </div>
-  <div class="home-title">🧭 ESCOLHE A TUA CATEGORIA</div>
-  <div class="category-grid" id="categoryGrid"></div>
-  <div class="catalog-head"><div class="home-title" style="margin:0">🔥 JOGOS DA ARENA</div><small>CATÁLOGO EM ORGANIZAÇÃO</small></div>
-  <div class="game-cards" id="gameCards"></div>
-  <div class="demo-note">🧪 MODO SOLO ATIVO: só existe o teu perfil local de teste. O catálogo não significa que torneios, partidas ou rankings online já estejam ligados.</div>
-</section>
-<section id="ranking">
-  <div class="home-title">🏆 RANKING E PROGRESSO</div>
-  <div class="controls"><input id="search" placeholder="🔍 Pesquisar jogo..." aria-label="Pesquisar jogo"><select id="sort"><option value="xp">Ordenar: XP</option><option value="name">Ordenar: Nome</option></select></div>
-  <div class="game-detail" id="selectedGame"></div>
-  <div class="stats">
-    <div class="stat"><b id="totalPlayers">1</b><span>PERFIL LOCAL</span></div>
-    <div class="stat"><b id="totalXP">0</b><span>XP GLOBAL</span></div>
-    <div class="stat"><b id="topXP">0</b><span>XP NO JOGO</span></div>
-  </div>
-  <div class="solo-panel">
-    <div class="solo-top"><div class="solo-avatar">WM</div><div><b>WAYNE MGD</b><small id="soloGameLabel">PERFIL DE TESTE • FREE FIRE</small></div></div>
-    <div class="solo-xp"><span id="medalLabel">🥉 BRONZE</span><strong id="soloXpLabel">0 XP</strong></div>
-    <div class="solo-progress"><i id="soloProgress" style="width:0%"></i></div>
-    <div class="solo-xp"><span id="nextMedalLabel">0 / 1.500 XP</span><span id="remainingXpLabel">Faltam 1.500 XP</span></div>
-    <div class="xp-actions"><button onclick="addXP(100)">+100 XP</button><button onclick="addXP(500)">+500 XP</button><button onclick="addXP(1000)">+1.000 XP</button></div>
-    <div class="solo-tools"><button onclick="resetCurrentXP()">↺ Reiniciar XP deste jogo</button><button onclick="resetAllXP()">Reiniciar tudo</button></div>
-  </div>
-  <div class="home-title">📊 CLASSIFICAÇÃO DE TESTE</div>
-  <div class="list" id="list"></div>
-  <div class="demo-note">⚠️ Os XP adicionados aqui são apenas para testar a progressão e ficam guardados neste dispositivo. Ainda não são resultados oficiais nem aparecem para outros jogadores.</div>
-</section>
-<section id="ai">
-  <div class="ai-panel">
-    <div class="ai-head"><div class="ai-icon">🤖</div><div><b>MGD AI</b><small>REDLINE GAMING INTELLIGENCE</small></div><div class="ai-status" id="aiStatus">A verificar…</div></div>
-    <div class="ai-chat" id="chat" aria-live="polite">
-      <div class="msg assistant"><div class="msg-label">MGD AI</div>Salve, gamer! 🎮🔥
-Faz uma pergunta sobre jogos, disponibilidade, requisitos ou atualizações.
-Estou pronta para entrar em ação!</div>
+
+<div class="network-error" id="network-error">Mensagem não enviada, por favor verifique a sua ligação.</div>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>MGD REDLINE</h2>
+        <button class="close-btn" onclick="closeSidebar()">×</button>
     </div>
-    <form class="ai-form" id="form"><div class="ai-controls"><textarea id="message" maxlength="6000" placeholder="Escreve a tua pergunta..." required></textarea><button id="send">ENVIAR ➤</button></div><div class="ai-bottom"><span>Enter para enviar · Shift + Enter para nova linha</span><button class="clear" id="clear" type="button">Limpar conversa</button></div></form>
-  </div>
-</section>
-</main>
-<footer>MGD ARENA © 2026 • POWERED BY MGD REDLINE • VERSÃO 2.0 • MODO SOLO</footer>
+    <button class="new-chat-btn" onclick="startNewChat()">+ Nova Conversa</button>
+    <div class="history-list" id="history-list"></div>
+    
+    <div class="data-actions">
+        <button class="data-btn" onclick="exportData()">⬇ Exportar</button>
+        <button class="data-btn" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+    </div>
+</div>
+
+<header>
+    <button class="menu-btn" onclick="openSidebar()"><span></span><span></span><span></span></button>
+    <div class="header-title">MGD AI</div>
+</header>
+
+<div class="chat-container" id="chat-container"></div>
+
+<div class="input-area">
+    <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+    <div id="image-preview-container">
+        <div class="image-preview-box">
+            <img id="image-preview-img" src="" alt="Preview">
+            <button class="cancel-img-btn" onclick="cancelImage()">×</button>
+        </div>
+    </div>
+    <div class="input-row">
+        <button class="plus-btn" onclick="document.getElementById('file-input').click()">+</button>
+        <div class="input-box">
+            <input type="text" id="message-input" placeholder="Message MGD AI..." onkeypress="handleEnter(event)">
+        </div>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+        </button>
+    </div>
+</div>
+
 <script>
-// MGD ARENA v2 — catálogo por categorias e perfil solo local.
-const games=[
- {id:"ea-fc",nome:"EA SPORTS FC",cat:"football",emoji:"⚽",icone:""},
- {id:"efootball",nome:"eFootball",cat:"football",emoji:"⚽",icone:""},
- {id:"dls26",nome:"DLS 26",cat:"football",emoji:"🏟️",icone:""},
- {id:"ea-fifa-mobile",nome:"EA FIFA Mobile",cat:"football",emoji:"🥅",icone:""},
- {id:"nfsnl",nome:"Need for Speed: No Limits",cat:"racing",emoji:"🏎️",icone:""},
- {id:"asphalt-xtreme",nome:"Asphalt Xtreme",cat:"racing",emoji:"🚙",icone:""},
- {id:"asphalt-legends",nome:"Asphalt Legends",cat:"racing",emoji:"🏁",icone:""},
- {id:"carx-street",nome:"CarX Street",cat:"racing",emoji:"🚘",icone:""},
- {id:"real-racing-3",nome:"Real Racing 3",cat:"racing",emoji:"🏎️",icone:""},
- {id:"freefire",nome:"Free Fire",cat:"battle",emoji:"🔥",icone:"https://play-lh.googleusercontent.com/VxqoBX9loIqsESn5OPhXDLLYw8YFAlLJX3TJUb7ovyIQdRRWwGuG3jD9konTZAeWzd8VlVTDt8fkJ8BAEU4ZHQ=w240-h480"},
- {id:"freefiremax",nome:"Free Fire MAX",cat:"battle",emoji:"👑",icone:"https://play-lh.googleusercontent.com/CHTegoh7kat0rwX0gsbqrAAepT4qYASGwJi-KyAdcxVlnQxN3pe4ahKNe6lh4_vOCutj-oQp6rWRoBKiuxvdEw=w240-h480"},
- {id:"pubg",nome:"PUBG Mobile",cat:"battle",emoji:"🎯",icone:"https://play-lh.googleusercontent.com/Se7jR6A5R0Mk9ClaIguf46yi2K3k32JsqKb3gAtrktIh3JwnFfxrQRmG9GLvdMpbxbMrReUOxzDkStxGxNo-5Q=w240-h480"},
- {id:"codm",nome:"Call of Duty: Mobile",cat:"battle",emoji:"💥",icone:"https://play-lh.googleusercontent.com/cKXlbU72_2wSXdjcD_zPWED3EVaaOQVqqHgiA9JoRQMprYen49arNUMTngcRc9UWLnv-ANT9gyQBDQpvAn61lg=w240-h480"},
- {id:"fortnite",nome:"Fortnite",cat:"battle",emoji:"⚡",icone:"https://play-lh.googleusercontent.com/on6jel4w7S9PtUVpPEeNhO7RRKg6y-FFkg6pr9cvcEJfuunJKX-hcJOlGZlTQO-B_E13zZMvGuE8yL_d_VU5ug=w240-h480"},
- {id:"minecraft",nome:"Minecraft",cat:"adventure",emoji:"⛏️",icone:""},
- {id:"roblox",nome:"Roblox",cat:"adventure",emoji:"🧱",icone:""},
- {id:"terraria",nome:"Terraria",cat:"adventure",emoji:"🌳",icone:""},
- {id:"genshin",nome:"Genshin Impact",cat:"adventure",emoji:"✨",icone:""},
- {id:"shadow-fight",nome:"Shadow Fight 4",cat:"fight",emoji:"🥷",icone:""},
- {id:"mortal-kombat",nome:"Mortal Kombat Mobile",cat:"fight",emoji:"🥊",icone:""},
- {id:"brawlhalla",nome:"Brawlhalla",cat:"fight",emoji:"⚔️",icone:""},
- {id:"8ball",nome:"8 Ball Pool",cat:"sport",emoji:"🎱",icone:""},
- {id:"basketball-stars",nome:"Basketball Stars",cat:"sport",emoji:"🏀",icone:""},
- {id:"nba2k",nome:"NBA 2K Mobile",cat:"sport",emoji:"🏀",icone:""},
- {id:"clash-clans",nome:"Clash of Clans",cat:"strategy",emoji:"🛡️",icone:""},
- {id:"clash-royale",nome:"Clash Royale",cat:"strategy",emoji:"👑",icone:""},
- {id:"mobile-legends",nome:"Mobile Legends: Bang Bang",cat:"strategy",emoji:"🧙",icone:""},
- {id:"brawl-stars",nome:"Brawl Stars",cat:"strategy",emoji:"⭐",icone:""}
-];
-const categories=[
- {id:"all",nome:"TODAS",emoji:"🎮",desc:"Ver o catálogo completo"},
- {id:"football",nome:"FOOTBALL",emoji:"⚽",desc:"4 jogos"},
- {id:"racing",nome:"CORRIDA",emoji:"🏎️",desc:"5 jogos"},
- {id:"battle",nome:"BATTLE ROYALE",emoji:"🎯",desc:"5 jogos"},
- {id:"adventure",nome:"AVENTURA",emoji:"🗺️",desc:"4 jogos"},
- {id:"fight",nome:"LUTA",emoji:"🥊",desc:"3 jogos"},
- {id:"sport",nome:"DESPORTO",emoji:"🏆",desc:"3 jogos"},
- {id:"strategy",nome:"ESTRATÉGIA",emoji:"🧠",desc:"4 jogos"}
-];
-const STORAGE_KEY='mgd_arena_solo_v2';
-function loadProgress(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}}
-let progress=loadProgress();
-let currentCategory='all';
-let currentGame='freefire';
-function saveProgress(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress))}catch(e){alert('Não foi possível guardar os dados neste dispositivo.')}}
-function xpFor(id){const n=Number(progress[id]||0);return Number.isFinite(n)?Math.max(0,Math.floor(n)):0}
-function totalXP(){return games.reduce((sum,g)=>sum+xpFor(g.id),0)}
-function medalha(xp){if(xp>=15000)return{nome:'GRANDMASTER',emoji:'👑',cor:'#ffd700',min:15000,next:20000};if(xp>=12000)return{nome:'MASTER',emoji:'💎',cor:'#00e5ff',min:12000,next:15000};if(xp>=9000)return{nome:'DIAMANTE',emoji:'💠',cor:'#4da6ff',min:9000,next:12000};if(xp>=6000)return{nome:'PLATINA',emoji:'✨',cor:'#e0e0e0',min:6000,next:9000};if(xp>=3500)return{nome:'OURO',emoji:'🥇',cor:'#ffd700',min:3500,next:6000};if(xp>=1500)return{nome:'PRATA',emoji:'🥈',cor:'#c0c0c0',min:1500,next:3500};return{nome:'BRONZE',emoji:'🥉',cor:'#cd7f32',min:0,next:1500}}
-function gameIcon(g,small=false){if(!g.icone)return `<span class="${small?'tab-emoji':'game-icon fallback'}">${g.emoji}</span>`;return `<img class="${small?'tab-icon':'game-icon'}" src="${g.icone}" alt="Ícone ${g.nome}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'tab-emoji',textContent:'${g.emoji}'}))">`}
-function selectGame(id){if(!games.some(g=>g.id===id))return;currentGame=id;mostrar('ranking');render()}
-function selectCategory(id){currentCategory=id;renderCategories();renderGames()}
-function renderCategories(){const el=document.getElementById('categoryGrid');el.innerHTML=categories.map(c=>`<button class="category-card ${currentCategory===c.id?'active':''}" onclick="selectCategory('${c.id}')"><span class="cat-emoji">${c.emoji}</span><b>${c.nome}</b><small>${c.desc}</small></button>`).join('')}
-function renderGames(){const term=(document.getElementById('search')?.value||'').trim().toLowerCase();let list=games.filter(g=>(currentCategory==='all'||g.cat===currentCategory)&&(!term||g.nome.toLowerCase().includes(term)));const sort=document.getElementById('sort')?.value||'xp';if(sort==='name')list.sort((a,b)=>a.nome.localeCompare(b.nome));document.getElementById('gameCards').innerHTML=list.map(g=>`<button class="gcard" onclick="selectGame('${g.id}')"><div class="game-title">${gameIcon(g)}<b>${g.nome}</b></div><span>Categoria: ${categories.find(c=>c.id===g.cat).nome}</span><em class="game-status">CATÁLOGO / TESTE</em></button>`).join('')||'<div class="empty-state">Nenhum jogo encontrado nesta categoria.</div>'}
-function addXP(amount){progress[currentGame]=xpFor(currentGame)+amount;saveProgress();render()}
-function resetCurrentXP(){if(!confirm('Reiniciar o XP de '+games.find(g=>g.id===currentGame).nome+'?'))return;delete progress[currentGame];saveProgress();render()}
-function resetAllXP(){if(!confirm('Apagar todo o XP de teste guardado neste dispositivo?'))return;progress={};saveProgress();render()}
-function render(){const game=games.find(g=>g.id===currentGame)||games[0];const xp=xpFor(game.id),med=medalha(xp),global=totalXP();const progressPct=Math.max(0,Math.min(100,((xp-med.min)/(med.next-med.min))*100));
- document.getElementById('totalPlayersHome').textContent='1';document.getElementById('totalXPHome').textContent=global.toLocaleString();document.getElementById('topXPHome').textContent=global.toLocaleString();
- document.getElementById('totalPlayers').textContent='1';document.getElementById('totalXP').textContent=global.toLocaleString();document.getElementById('topXP').textContent=xp.toLocaleString();
- document.getElementById('selectedGame').innerHTML=`${gameIcon(game)}<div><b>${game.nome}</b><small>${categories.find(c=>c.id===game.cat).nome} • PROGRESSO LOCAL DE TESTE</small></div>`;
- document.getElementById('soloGameLabel').textContent='PERFIL DE TESTE • '+game.nome.toUpperCase();document.getElementById('soloXpLabel').textContent=xp.toLocaleString()+' XP';document.getElementById('medalLabel').textContent=med.emoji+' '+med.nome;document.getElementById('soloProgress').style.width=progressPct+'%';document.getElementById('nextMedalLabel').textContent=xp.toLocaleString()+' / '+med.next.toLocaleString()+' XP';document.getElementById('remainingXpLabel').textContent='Faltam '+Math.max(0,med.next-xp).toLocaleString()+' XP';
- document.getElementById('list').innerHTML=`<div class="row top1"><div class="pos top1">1</div><div class="mini">WM</div><div class="info"><b>WAYNE MGD</b><span>Perfil local • dados de teste</span><div class="progress"><i style="width:${progressPct}%"></i></div></div><div class="xp-box"><span class="badge" style="background:${med.cor}22;color:${med.cor};border:1px solid ${med.cor}">${med.emoji} ${med.nome}</span><b>${xp.toLocaleString()} XP</b><span>Faltam ${Math.max(0,med.next-xp).toLocaleString()} XP</span></div></div>`;
- document.getElementById('liveText').textContent='MODO SOLO • '+game.nome;
-}
-function mostrar(id){document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const navId=({home:'btnHome',ranking:'btnRanking',ai:'btnAI'})[id];if(navId)document.getElementById(navId).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(id==='ai')document.getElementById('message').focus();render()}
-document.getElementById('search').addEventListener('input',renderGames);document.getElementById('sort').addEventListener('change',renderGames);
-renderCategories();renderGames();render();
-setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
-// MGD AI: mantém a ligação ao backend independente existente.
-const API='https://mgd-arena-intelligence.onrender.com';const chat=document.getElementById('chat'),form=document.getElementById('form'),input=document.getElementById('message'),send=document.getElementById('send');const history=[];
-function cleanText(text){return String(text).split('*').join('')}
-function renderMessage(text){const body=document.createElement('div');text=cleanText(text);const pattern=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+)/g;let lastIndex=0,match;while((match=pattern.exec(text))!==null){body.appendChild(document.createTextNode(text.slice(lastIndex,match.index)));const label=match[1]||match[3];let rawUrl=match[2]||match[3],trailing='';if(!match[2])while(/[.,!?;:]$/.test(rawUrl)){trailing=rawUrl.slice(-1)+trailing;rawUrl=rawUrl.slice(0,-1)}try{const url=new URL(rawUrl);if(!['http:','https:'].includes(url.protocol))throw Error('URL inválida');const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent=label;body.appendChild(a);if(trailing)body.appendChild(document.createTextNode(trailing))}catch(e){body.appendChild(document.createTextNode(match[0]))}lastIndex=pattern.lastIndex}body.appendChild(document.createTextNode(text.slice(lastIndex)));return body}
-function addMessage(role,text,sources=[]){const box=document.createElement('div');box.className='msg '+(role==='user'?'user':'assistant');const label=document.createElement('div');label.className='msg-label';label.textContent=role==='user'?'TU':'MGD AI';const body=role==='user'?document.createElement('div'):renderMessage(text);if(role==='user')body.textContent=text;box.append(label,body);if(sources.length){const area=document.createElement('div');area.className='sources';const title=document.createElement('strong');title.textContent='FONTES CONSULTADAS';area.append(title);sources.forEach((source,index)=>{try{const url=new URL(source.url);if(!['http:','https:'].includes(url.protocol))return;const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent=`[${index+1}] ${source.title||url.hostname}`;area.append(a)}catch(e){}});box.append(area)}chat.append(box);chat.scrollTop=chat.scrollHeight}
-async function checkHealth(){try{const r=await fetch(API+'/health');if(!r.ok)throw Error();const d=await r.json();document.getElementById('aiStatus').textContent=d.status==='ok'?'● ONLINE':'● '+d.status;document.getElementById('aiStatus').style.color=d.status==='ok'?'#00ff88':'#ff6570'}catch(e){document.getElementById('aiStatus').textContent='● Backend indisponível';document.getElementById('aiStatus').style.color='#ff6570'}}
-form.addEventListener('submit',async e=>{e.preventDefault();const message=input.value.trim();if(!message||send.disabled)return;addMessage('user',message);history.push({role:'user',content:message});input.value='';send.disabled=true;send.textContent='A PENSAR…';const wait=document.createElement('div');wait.className='msg assistant';wait.textContent='A MGD AI está a analisar a pergunta… 🧠';chat.append(wait);chat.scrollTop=chat.scrollHeight;try{const response=await fetch(API+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,history:history.slice(0,-1)})});const data=await response.json().catch(()=>({}));wait.remove();if(!response.ok)throw Error(data.error||'Erro HTTP '+response.status);const reply=cleanText(typeof data.reply==='string'?data.reply:'Resposta inválida do backend.');history.push({role:'assistant',content:reply});addMessage('assistant',reply,Array.isArray(data.sources)?data.sources:[]);if(data.searched){const notice=document.createElement('div');notice.className='demo-note';notice.textContent='🌐 Esta resposta utilizou resultados da pesquisa Web.';chat.append(notice)}}catch(error){wait.remove();addMessage('assistant','Não consegui concluir o pedido: '+error.message)}finally{send.disabled=false;send.textContent='ENVIAR ➤';input.focus()}});
-input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});document.getElementById('clear').addEventListener('click',()=>{history.length=0;chat.innerHTML='';addMessage('assistant','Conversa limpa! 🎮 Faz a tua próxima pergunta.')});checkHealth();
+    const API = 'https://mgd-arena-intelligence.onrender.com';
+    let conversations = [];
+    let activeChatId = null;
+    let currentImageBase64 = null;
+    let isProcessing = false;
+    let currentAudio = null;
+    let serverAwake = false;
+
+    // ==========================================
+    // INDEXED DB
+    // ==========================================
+    let db;
+    const request = indexedDB.open('MGD_AI_DB', 1);
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        if (!db.objectStoreNames.contains('chats')) {
+            db.createObjectStore('chats');
+        }
+    };
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        loadConversations();
+    };
+
+    function saveDB() {
+        if (!db) return;
+        const tx = db.transaction('chats', 'readwrite');
+        tx.objectStore('chats').put(conversations, 'history');
+    }
+
+    function loadConversations() {
+        if (!db) return;
+        const tx = db.transaction('chats', 'readonly');
+        const req = tx.objectStore('chats').get('history');
+        req.onsuccess = () => {
+            if (req.result && req.result.length > 0) {
+                conversations = req.result;
+                loadChat(conversations[0].id);
+            } else {
+                createNewChat();
+            }
+        };
+    }
+
+    // ==========================================
+    // EXPORTAR / IMPORTAR
+    // ==========================================
+    function exportData() {
+        if (conversations.length === 0) return alert("Não há conversas para exportar.");
+        const dataStr = JSON.stringify({ app: "MGD AI", format_version: 1, conversations: conversations }, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MGD_AI_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.app !== "MGD AI" || !Array.isArray(data.conversations)) {
+                    throw new Error("Ficheiro inválido.");
+                }
+                const existingIds = conversations.map(c => c.id);
+                let importedCount = 0;
+                data.conversations.forEach(chat => {
+                    if (!existingIds.includes(chat.id)) {
+                        conversations.push(chat);
+                        importedCount++;
+                    }
+                });
+                saveDB();
+                renderSidebar();
+                alert(`Importação concluída! ${importedCount} novas conversas adicionadas.`);
+            } catch (err) {
+                alert("Erro ao importar: O ficheiro não é um backup válido do MGD AI.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // ==========================================
+    // LÓGICA DO CHAT
+    // ==========================================
+    window.onload = async () => {
+        try {
+            const res = await fetch(`${API}/health`, { method: 'GET' });
+            if (res.ok) serverAwake = true;
+        } catch(e) { serverAwake = false; }
+    };
+
+    function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+    function createNewChat() {
+        const newChat = { id: 'chat_' + Date.now(), title: 'Nova Conversa', history: [] };
+        conversations.unshift(newChat);
+        saveDB();
+        activeChatId = newChat.id;
+        renderSidebar();
+        document.getElementById('chat-container').innerHTML = '';
+        closeSidebar();
+    }
+
+    function startNewChat() { createNewChat(); }
+
+    function loadChat(id) {
+        activeChatId = id;
+        renderSidebar();
+        const chat = conversations.find(c => c.id === id);
+        const container = document.getElementById('chat-container');
+        container.innerHTML = '';
+        
+        if (chat && chat.history.length > 0) {
+            chat.history.forEach(msg => {
+                if (msg.role === 'user') {
+                    addUserMessageToDOM(msg.content, msg.imageSrc || null);
+                } else if (msg.role === 'assistant') {
+                    addAIMessageToDOM(msg.content, msg.timeTaken, msg.sources || []);
+                }
+            });
+        }
+        closeSidebar();
+    }
+
+    function renderSidebar() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        conversations.forEach(chat => {
+            const div = document.createElement('div');
+            div.className = `history-item ${chat.id === activeChatId ? 'active' : ''}`;
+            div.textContent = chat.title;
+            div.onclick = () => loadChat(chat.id);
+            list.appendChild(div);
+        });
+    }
+
+    function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width, height = img.height;
+                if (width > 800 || height > 800) {
+                    if (width > height) { height *= 800 / width; width = 800; }
+                    else { width *= 800 / height; height = 800; }
+                }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                
+                currentImageBase64 = dataUrl.split(',')[1];
+                document.getElementById('image-preview-img').src = dataUrl;
+                document.getElementById('image-preview-container').style.display = 'block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        event.target.value = ''; 
+    }
+
+    function cancelImage() {
+        currentImageBase64 = null;
+        document.getElementById('image-preview-container').style.display = 'none';
+        document.getElementById('image-preview-img').src = '';
+    }
+
+    function addUserMessageToDOM(text, imageSrc = null) {
+        const container = document.getElementById('chat-container');
+        const row = document.createElement('div');
+        row.className = 'msg-row user';
+        if (imageSrc) {
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            img.className = 'msg-image';
+            row.appendChild(img);
+        }
+        if (text) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+            row.appendChild(bubble);
+        }
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    function addAIMessageToDOM(text, timeTaken = null, sources = []) {
+        const container = document.getElementById('chat-container');
+        const row = document.createElement('div');
+        row.className = 'msg-row ai';
+
+        if (timeTaken) {
+            const timeLabel = document.createElement('div');
+            timeLabel.className = 'processing-time';
+            timeLabel.textContent = `Processou durante ${timeTaken} segundos`;
+            row.appendChild(timeLabel);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = formatResponse(text);
+        row.appendChild(bubble);
+
+        bubble.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+
+        if (sources && sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.style.marginTop = '10px';
+            sourcesDiv.style.fontSize = '12px';
+            sourcesDiv.innerHTML = '<strong>Fontes:</strong><br>' + 
+                sources.map(s => `<a href="${s.url}" target="_blank" style="color:var(--red); text-decoration:underline;">${s.title}</a>`).join('<br>');
+            bubble.appendChild(sourcesDiv);
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions';
+        const listenBtn = document.createElement('button');
+        listenBtn.className = 'action-btn';
+        listenBtn.innerHTML = '🔊 Ouvir';
+        listenBtn.onclick = () => playAudio(text, listenBtn);
+        actionsDiv.appendChild(listenBtn);
+        row.appendChild(actionsDiv);
+
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    function sanitizeText(text) { return text.replace(/[*#]/g, ''); }
+
+    function formatResponse(text) {
+        let html = sanitizeText(text);
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+            const language = lang || 'plaintext';
+            const escapedCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return `
+                <div class="code-container">
+                    <div class="code-header">
+                        <span>${language.toUpperCase()}</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    <pre><code class="language-${language}">${escapedCode}</code></pre>
+                </div>
+            `;
+        });
+
+        const lines = html.split('\n');
+        let inTable = false;
+        let tableHtml = '';
+        let processedHtml = [];
+
+        lines.forEach(line => {
+            if (line.includes('|') && line.split('|').length > 2) {
+                if (!inTable) { inTable = true; tableHtml = '<table>'; }
+                if (!line.includes('---')) {
+                    const cells = line.split('|').filter(c => c.trim() !== '');
+                    tableHtml += '<tr>';
+                    cells.forEach(cell => tableHtml += `<td>${cell.trim()}</td>`);
+                    tableHtml += '</tr>';
+                }
+            } else {
+                if (inTable) { tableHtml += '</table>'; processedHtml.push(tableHtml); inTable = false; }
+                processedHtml.push(line);
+            }
+        });
+        if (inTable) { tableHtml += '</table>'; processedHtml.push(tableHtml); }
+
+        return processedHtml.join('<br>').replace(/<br><table>/g, '<table>').replace(/<\/table><br>/g, '</table>');
+    }
+
+    // ==========================================
+    // COPIAR CÓDIGO (CORRIGIDO COM FALLBACK)
+    // ==========================================
+    function copyCode(btn) {
+        const codeEl = btn.closest('.code-container').querySelector('code');
+        const textToCopy = codeEl.innerText;
+
+        function showSuccess() {
+            btn.textContent = 'Copiado!';
+            setTimeout(() => btn.textContent = 'Copiar', 2000);
+        }
+
+        function fallbackCopy() {
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showSuccess();
+            } catch (err) {
+                alert('Falha ao copiar. O teu navegador bloqueou a ação.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(fallbackCopy);
+        } else {
+            fallbackCopy();
+        }
+    }
+
+    async function sendMessage() {
+        if (isProcessing) return;
+        
+        const input = document.getElementById('message-input');
+        let text = input.value.trim();
+        if (!text && !currentImageBase64) return;
+
+        const imgToSend = currentImageBase64;
+        const dataUrlToSave = imgToSend ? "data:image/jpeg;base64," + imgToSend : null;
+        
+        let textToSend = text;
+        if (!textToSend && imgToSend) textToSend = "O que há nesta imagem?";
+
+        addUserMessageToDOM(text, dataUrlToSave);
+        
+        input.value = '';
+        cancelImage(); 
+        isProcessing = true;
+        document.getElementById('send-btn').style.opacity = '0.5';
+        
+        const container = document.getElementById('chat-container');
+        const aiRow = document.createElement('div');
+        aiRow.className = 'msg-row ai';
+        
+        const coreLive = document.createElement('div');
+        coreLive.className = 'core-live';
+        
+        if (!serverAwake) {
+            coreLive.innerHTML = '<div class="core-live-step">A Ligar o Servidor MGD (Isto pode demorar até 50 segundos)...</div>';
+        } else {
+            coreLive.innerHTML = '<div class="core-live-step">A processar pedido...</div>';
+        }
+        aiRow.appendChild(coreLive);
+        container.appendChild(aiRow);
+        scrollToBottom();
+
+        const startTime = Date.now();
+        
+        try {
+            const chat = conversations.find(c => c.id === activeChatId);
+            if (chat.history.length === 0) {
+                chat.title = text ? (text.substring(0, 25) + (text.length > 25 ? '...' : '')) : "Análise de Imagem";
+                renderSidebar();
+            }
+
+            const response = await fetch(`${API}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: textToSend, image: imgToSend, history: chat.history })
+            });
+            
+            if (!response.ok) throw new Error("Network response was not ok");
+            
+            const data = await response.json();
+            serverAwake = true;
+            
+            const endTime = Date.now();
+            const seconds = ((endTime - startTime) / 1000).toFixed(1);
+            
+            if (data.activities && data.activities.length > 0) {
+                coreLive.innerHTML = '';
+                for (let i = 0; i < data.activities.length; i++) {
+                    await new Promise(r => setTimeout(r, 600));
+                    const step = document.createElement('div');
+                    step.className = 'core-live-step';
+                    step.textContent = data.activities[i];
+                    coreLive.appendChild(step);
+                    scrollToBottom();
+                }
+                await new Promise(r => setTimeout(r, 500)); 
+            }
+            
+            if (aiRow.contains(coreLive)) aiRow.removeChild(coreLive);
+            
+            const timeLabel = document.createElement('div');
+            timeLabel.className = 'processing-time';
+            timeLabel.textContent = `Processou durante ${seconds} segundos`;
+            aiRow.appendChild(timeLabel);
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerHTML = formatResponse(data.reply);
+            aiRow.appendChild(bubble);
+            
+            bubble.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+            
+            if (data.sources && data.sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.style.marginTop = '10px';
+                sourcesDiv.style.fontSize = '12px';
+                sourcesDiv.innerHTML = '<strong>Fontes:</strong><br>' + 
+                    data.sources.map(s => `<a href="${s.url}" target="_blank" style="color:var(--red); text-decoration:underline;">${s.title}</a>`).join('<br>');
+                bubble.appendChild(sourcesDiv);
+            }
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'actions';
+            const listenBtn = document.createElement('button');
+            listenBtn.className = 'action-btn';
+            listenBtn.innerHTML = '🔊 Ouvir';
+            listenBtn.onclick = () => playAudio(data.reply, listenBtn);
+            actionsDiv.appendChild(listenBtn);
+            aiRow.appendChild(actionsDiv);
+
+            chat.history.push({ role: 'user', content: textToSend, imageSrc: dataUrlToSave });
+            chat.history.push({ role: 'assistant', content: data.reply, timeTaken: seconds, sources: data.sources });
+            saveDB();
+
+            document.getElementById('network-error').classList.remove('show');
+
+        } catch (error) {
+            if (aiRow.contains(coreLive)) aiRow.removeChild(coreLive);
+            const errBubble = document.createElement('div');
+            errBubble.className = 'bubble';
+            errBubble.style.color = 'var(--red)';
+            errBubble.textContent = "Erro ao comunicar com o servidor.";
+            aiRow.appendChild(errBubble);
+            document.getElementById('network-error').classList.add('show');
+        } finally {
+            isProcessing = false;
+            document.getElementById('send-btn').style.opacity = '1';
+            scrollToBottom();
+        }
+    }
+
+    async function playAudio(text, btn) {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+            btn.innerHTML = '🔊 Ouvir';
+            return;
+        }
+        btn.innerHTML = 'A gerar...';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API}/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            if (!res.ok) throw new Error("Erro TTS");
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            currentAudio = new Audio(url);
+            btn.innerHTML = '⏹ Parar';
+            btn.disabled = false;
+            currentAudio.onended = () => {
+                btn.innerHTML = '🔊 Ouvir';
+                currentAudio = null;
+            };
+            currentAudio.play();
+        } catch (e) {
+            btn.innerHTML = '🔊 Ouvir';
+            btn.disabled = false;
+            alert("Erro ao gerar áudio.");
+        }
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('chat-container');
+        container.scrollTop = container.scrollHeight;
+    }
 </script>
 </body>
 </html>

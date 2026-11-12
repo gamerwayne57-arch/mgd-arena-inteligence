@@ -226,11 +226,7 @@ def chat():
                     else:
                         activities.append("Nenhum resultado encontrado")
 
-        # 4. Verificar se é pedido de código (Contextual)
-        if re.search(r"\b(codigo|código|script|programa|programar|função|funcao|classe|debug|corrigir|c\+\+|c#|python|lua|html|glsl)\b", message, re.IGNORECASE):
-            activities.extend(["A escrever codigo...", "Escreveu Codigo", "A Verificar codigo...", "Verificou Codigo"])
-
-        # 5. Preparar Mensagens para a IA
+        # 4. Preparar Mensagens para a IA
         final_messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             *history
@@ -250,11 +246,15 @@ def chat():
                 "content": final_message + source_context
             })
 
-        # 6. Chamar a IA
+        # 5. Chamar a IA
         reply = groq_chat(final_messages, model_to_use, temperature=0.6, max_tokens=2048)
         
         # Limpeza de segurança
         reply = reply.replace("*", "").replace("#", "")
+
+        # 6. CORREÇÃO DO CORE LIVE: Só mostra atividade de código se a resposta contiver código!
+        if "```" in reply:
+            activities.extend(["A escrever código...", "Escreveu Código", "A Verificar código...", "Verificou Código"])
 
         return jsonify({
             "reply": reply,
