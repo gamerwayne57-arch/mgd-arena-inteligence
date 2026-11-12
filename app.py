@@ -32,83 +32,71 @@ TAVILY_URL = "https://api.tavily.com/search"
 TTS_VOICE = "pt-BR-FranciscaNeural"
 
 REQUEST_TIMEOUT = 40
-MAX_HISTORY_MESSAGES = 10 # Reduzido para aliviar o peso do pedido
+MAX_HISTORY_MESSAGES = 10
 MAX_MESSAGE_LENGTH = 6000
 
 SYSTEM_PROMPT = """
 Es a MGD AI, a inteligencia artificial oficial da MGD REDLINE. O teu criador e Wayne Matimbe, tambem conhecido como CEO Wayne.
-
-CONHECIMENTO DE SI MESMA E OBJETIVO:
-- O teu objetivo e ser a assistente definitiva: ajudas com programacao, matematica, ciencias, linguas, tecnologia, escrita, aprendizagem, analise de imagens e assuntos gerais.
-- Tu tens capacidades avancadas. Sabes que consegues ver e analisar imagens, pesquisar na internet em tempo real (via Tavily) e falar (gerar audio TTS).
-- Se te perguntarem o que fazes, lista estas capacidades com orgulho e clareza.
-
-ADAPTACAO AO UTILIZADOR (PERSONALIDADE):
-- Nao sejas sempre seria. Adapta o teu tom a forma como o utilizador fala.
-- Se for descontraido, usa um tom amigavel. Se for tecnico, se precisa e formal.
-- Espelha a energia do utilizador. Trata todos com respeito.
-
-IDIOMA E FORMATACAO ESTRITA (REGRA CRITICA):
-- Responde SEMPRE no idioma da mensagem mais recente do utilizador.
-- E TERMINANTEMENTE PROIBIDO usar asteriscos (*) ou cerquilhas (#) para destacar texto.
-- Para desenhar tabelas, usa a formatacao Markdown padrao com barras verticais (|), sem asteriscos.
-- Para codigo, usa blocos delimitados por tres crases e identifica a linguagem (ex: ```python).
-
-PRECISAO E HONESTIDADE (CRITICO):
-- NUNCA inventes factos, links ou resultados.
-- Se receberes o conteudo de um site, baseia-te ESTRITAMENTE no texto fornecido.
-- Se o sistema disser que falhou a leitura de um link, informa o utilizador que nao consegues aceder ao conteudo.
-- Se nao souberes algo, diz claramente.
+O teu objetivo e ser a assistente definitiva: ajudas com programacao, matematica, ciencias, linguas, tecnologia, escrita, aprendizagem, analise de imagens e assuntos gerais.
+Tu tens capacidades avancadas. Sabes que consegues ver e analisar imagens, pesquisar na internet em tempo real e falar (gerar audio TTS).
+Adapta o teu tom a forma como o utilizador fala. Se for descontraido, usa um tom amigavel. Se for tecnico, se precisa e formal.
+IDIOMA: Responde SEMPRE no idioma da mensagem mais recente do utilizador.
+REGRA CRITICA: E TERMINANTEMENTE PROIBIDO usar asteriscos (*) ou cerquilhas (#) para destacar texto. Usa texto simples e maiusculas se precisares.
+Para tabelas, usa barras verticais (|). Para codigo, usa blocos delimitados por tres crases e identifica a linguagem.
+NUNCA inventes factos, links ou resultados. Se receberes o conteudo de um site, baseia-te estritamente no texto fornecido. Se nao souberes, diz claramente.
 """
 
 DECISION_PROMPT = """
-Analisa a mensagem mais recente do utilizador.
-Decide se a pergunta precisa de pesquisa atual na web.
-Devolve APENAS JSON valido:
-{"search": false, "query": "", "response_language": "Portuguese"}
+Analisa a mensagem mais recente do utilizador. Decida se precisa de pesquisa atual na web.
+Devolve APENAS JSON valido: {"search": false, "query": "", "response_language": "Portuguese"}
 """
 
 def groq_chat(messages, model, temperature=0.4, max_tokens=2048):
     if not GROQ_API_KEY:
         raise RuntimeError("A chave GROQ_API_KEY nao esta configurada.")
     
-    response = requests.post(
-        GROQ_URL,
-        headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-        json={"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens},
-        timeout=REQUEST_TIMEOUT,
-    )
-    
-    if response.status_code == 429:
-        raise RuntimeError("Limite de pedidos da Groq atingido. Aguarda um momento.")
-    if response.status_code >= 400:
-        raise RuntimeError(f"Erro Groq ({response.status_code}).")
+    try:
+        response = requests.post(
+            GROQ_URL,
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens},
+            timeout=REQUEST_TIMEOUT,
+        )
         
-    data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+        if response.status_code == 429:
+            raise RuntimeError("Limite de pedidos atingido. Aguarda um momento.")
+        if response.status_code >= 400:
+            raise RuntimeError(f"A IA recusou o pedido (Erro {response.status_code}).")
+            
+        data = response.json()
+        choices = data.get("choices", [])
+        if not choices:
+            raise RuntimeError("A IA nao devolveu uma resposta valida.")
+            
+        content = choices[0].get("message", {}).get("content")
+        return str(content).strip() if content else ""
+        
+    except requests.Timeout:
+        raise RuntimeError("A IA demorou demasiado a responder.")
+    except Exception as e:
+        raise RuntimeError(f"Falha na comunicacao com a IA: {str(e)}")
 
 def clean_history(history):
     if not isinstance(history, list):
         return []
     cleaned = []
     for item in history[-MAX_HISTORY_MESSAGES:]:
-        if not isinstance(item, dict):
-            continue
+        if not isinstance(item, dict): continue
         role = item.get("role")
         content = item.get("content")
-        if role not in ("user", "assistant") or not isinstance(content, str):
-            continue
-        content = content.strip()[:MAX_MESSAGE_LENGTH]
-        if content:
-            cleaned.append({"role": role, "content": content})
+        if role in ("user", "assistant") and isinstance(content, str):
+            content = content.strip()[:MAX_MESSAGE_LENGTH]
+            if content:
+                cleaned.append({"role": role, "content": content})
     return cleaned
 
 def decide_search(history, message):
-    messages = [
-        {"role": "system", "content": DECISION_PROMPT},
-        *history,
-        {"role": "user", "content": message},
-    ]
+    messages = [{"role": "system", "content": DECISION_PROMPT}, *history, {"role": "user", "content": message}]
     try:
         raw = groq_chat(messages, GROQ_MODEL_TEXT, temperature=0, max_tokens=100)
         start = raw.find("{")
@@ -116,8 +104,8 @@ def decide_search(history, message):
         decision = json.loads(raw[start:end])
         return (
             decision.get("search") is True,
-            decision.get("query", "").strip(),
-            decision.get("response_language", "Portuguese").strip()
+            str(decision.get("query", "")).strip(),
+            str(decision.get("response_language", "Portuguese")).strip()
         )
     except Exception:
         return False, "", "Portuguese"
@@ -135,7 +123,15 @@ def tavily_search(query):
         if response.status_code >= 400:
             return []
         results = response.json().get("results", [])
-        return [{"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("content", "")[:800]} for r in results]
+        # BLINDAGEM: Garante que nao ha valores nulos que quebrem o servidor
+        return [
+            {
+                "title": str(r.get("title") or ""), 
+                "url": str(r.get("url") or ""), 
+                "content": str(r.get("content") or "")[:800]
+            } 
+            for r in results if r.get("url")
+        ]
     except Exception:
         return []
 
@@ -147,12 +143,12 @@ def ler_site(url):
         soup = BeautifulSoup(res.text, 'html.parser')
         for script in soup(["script", "style", "nav", "footer", "header"]):
             script.decompose()
-        return soup.get_text(separator=' ', strip=True)[:3000]
+        return str(soup.get_text(separator=' ', strip=True))[:3000]
     except Exception:
         return None
 
 def limpar_url(url):
-    return re.sub(r"[.,;:!?)}\]>\"'`]+$", "", url.strip())
+    return re.sub(r"[.,;:!?)}\]>\"'`]+$", "", str(url).strip())
 
 @app.get("/")
 def home():
@@ -166,8 +162,12 @@ def health():
 @limiter.limit("20 per minute")
 def chat():
     data = request.get_json(silent=True) or {}
-    message = data.get("message", "").strip()
+    message = str(data.get("message", "")).strip()
     image_b64 = data.get("image", None)
+    
+    if image_b64 and not isinstance(image_b64, str):
+        image_b64 = None
+
     history = clean_history(data.get("history", []))
 
     if not message and not image_b64:
@@ -196,7 +196,7 @@ def chat():
                 else:
                     activities.append("Falha ao extrair conteudo")
                     final_message = f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura. Pede para ele copiar e colar o texto. PROIBIDO inventar."
-            elif not image_b64:
+            else:
                 should_search, search_query, _ = decide_search(history, message)
                 if should_search and search_query and TAVILY_API_KEY:
                     activities.extend(["A pesquisar na Web...", "Pesquisou na Web"])
@@ -207,10 +207,7 @@ def chat():
                         for i, s in enumerate(sources, 1):
                             source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
 
-        final_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *history
-        ]
+        final_messages = [{"role": "system", "content": SYSTEM_PROMPT}, *history]
 
         if image_b64:
             final_messages.append({
@@ -221,34 +218,33 @@ def chat():
                 ]
             })
         else:
-            final_messages.append({
-                "role": "user",
-                "content": final_message + source_context
-            })
+            final_messages.append({"role": "user", "content": final_message + source_context})
 
         reply = groq_chat(final_messages, model_to_use, temperature=0.6, max_tokens=2048)
-        reply = reply.replace("*", "").replace("#", "")
+        reply = str(reply).replace("*", "").replace("#", "")
 
         if "```" in reply:
             activities.extend(["A escrever código...", "Escreveu Código", "A Verificar código...", "Verificou Código"])
 
         return jsonify({
             "reply": reply,
-            "sources": [{"title": s["title"], "url": s["url"]} for s in sources],
+            "sources": sources,
             "activities": activities
         })
 
-    except requests.Timeout:
-        return jsonify({"reply": "O tempo de resposta esgotou. Tenta novamente.", "sources": [], "activities": activities}), 504
     except Exception as e:
         app.logger.error(f"Erro no chat: {e}")
-        return jsonify({"reply": f"Erro interno: {str(e)}", "sources": [], "activities": activities}), 500
+        return jsonify({
+            "reply": f"Erro técnico: {str(e)}", 
+            "sources": [], 
+            "activities": activities
+        }), 500
 
 @app.post("/tts")
 @limiter.limit("20 per minute")
 def tts():
     data = request.get_json(silent=True) or {}
-    text = data.get("text", "").strip()
+    text = str(data.get("text", "")).strip()
     
     if not text:
         return jsonify({"error": "Texto vazio."}), 400
