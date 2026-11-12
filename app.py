@@ -54,10 +54,11 @@ IDIOMA E FORMATACAO ESTRITA (REGRA CRITICA):
 - Para desenhar tabelas, usa a formatacao Markdown padrao com barras verticais (|), sem asteriscos.
 - Para codigo, usa blocos delimitados por tres crases e identifica a linguagem (ex: ```python).
 
-PRECISAO:
-- Nunca inventes factos, links ou resultados.
-- Se usares a pesquisa web, cita as fontes de forma natural.
-- Se nao souberes, diz claramente.
+PRECISAO E HONESTIDADE (CRITICO):
+- NUNCA inventes factos, links ou resultados.
+- Se receberes o conteudo de um site, baseia-te ESTRITAMENTE no texto fornecido. Se a resposta nao estiver no texto, diz que nao encontras-te a informacao no link.
+- Se o sistema disser que falhou a leitura de um link, informa o utilizador que nao consegues aceder ao conteudo e pede para ele copiar e colar o texto.
+- Se nao souberes algo, diz claramente.
 """
 
 DECISION_PROMPT = """
@@ -205,10 +206,10 @@ def chat():
                 conteudo = ler_site(url_alvo)
                 if conteudo:
                     activities.extend(["Extraiu o Conteudo", "A Resumir", "Resumiu o Conteudo"])
-                    final_message = f"O utilizador enviou o link {url_alvo}. Conteudo extraido:\n\n{conteudo}\n\nCom base nisto, responde: {message}"
+                    final_message = f"O utilizador enviou o link {url_alvo}. Conteudo extraido:\n\n{conteudo}\n\nCom base APENAS neste conteudo, responde ao utilizador: {message}. Se a resposta nao estiver no conteudo, diz que nao encontras-te a informacao no link."
                 else:
                     activities.append("Falha ao extrair conteudo")
-                    final_message = f"O utilizador enviou o link {url_alvo}, mas nao foi possivel ler o site. Responde ao utilizador: {message}"
+                    final_message = f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura automatica. Informa o utilizador que nao consegues aceder ao conteudo e pede para ele copiar e colar o texto. E TERMINANTEMENTE PROIBIDO inventar o que esta no link. Responde ao utilizador: {message}"
 
             # 3. Pesquisa Web (se nao for imagem nem link)
             elif not image_b64:
@@ -222,6 +223,8 @@ def chat():
                         source_context = "\n\nFONTES ENCONTRADAS NA WEB:\n"
                         for i, s in enumerate(sources, 1):
                             source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
+                    else:
+                        activities.append("Nenhum resultado encontrado")
 
         # 4. Verificar se é pedido de código (Contextual)
         if re.search(r"\b(codigo|código|script|programa|programar|função|funcao|classe|debug|corrigir|c\+\+|c#|python|lua|html|glsl)\b", message, re.IGNORECASE):
@@ -250,7 +253,7 @@ def chat():
         # 6. Chamar a IA
         reply = groq_chat(final_messages, model_to_use, temperature=0.6, max_tokens=2048)
         
-        # Limpeza de segurança para garantir que não vazam asteriscos ou cerquilhas
+        # Limpeza de segurança
         reply = reply.replace("*", "").replace("#", "")
 
         return jsonify({
@@ -260,10 +263,10 @@ def chat():
         })
 
     except requests.Timeout:
-        return jsonify({"reply": "A ligacao demorou demasiado. Tenta novamente.", "sources": [], "activities": activities}), 504
+        return jsonify({"reply": "A ligacao demorou demasiado.", "sources": [], "activities": activities}), 504
     except Exception as e:
         app.logger.error(f"Erro no chat: {e}")
-        return jsonify({"reply": "Erro tecnico ao processar a mensagem.", "sources": [], "activities": activities}), 502
+        return jsonify({"reply": "Erro tecnico.", "sources": [], "activities": activities}), 502
 
 @app.post("/tts")
 @limiter.limit("20 per minute")
