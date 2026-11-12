@@ -2,19 +2,18 @@ import os
 import json
 import requests
 import io
+import re
 import asyncio
 import edge_tts
+from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
-
-# Permite que qualquer frontend (incluindo o itch.io) aceda ao backend
 CORS(app, origins="*")
 
-# Configuração do Rate Limit (Protege as tuas chaves)
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -22,20 +21,17 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 
-# Chaves de API (Lidas do Render)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "").strip()
 
-# Modelos Oficiais
 GROQ_MODEL_TEXT = "openai/gpt-oss-120b"
 GROQ_MODEL_VISION = "qwen/qwen3.8-27b"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 TAVILY_URL = "https://api.tavily.com/search"
 
-# Voz Oficial
 TTS_VOICE = "pt-BR-FranciscaNeural"
 
-REQUEST_TIMEOUT = 35
+REQUEST_TIMEOUT = 45
 MAX_HISTORY_MESSAGES = 12
 MAX_MESSAGE_LENGTH = 6000
 
@@ -44,32 +40,32 @@ Es a MGD AI, a inteligencia artificial oficial da MGD REDLINE. O teu criador e W
 
 CONHECIMENTO DE SI MESMA E OBJETIVO:
 - O teu objetivo e ser a assistente definitiva: ajudas com programacao, matematica, ciencias, linguas, tecnologia, escrita, aprendizagem, analise de imagens e assuntos gerais.
-- Tu tens capacidades avancadas. Sabes que consegues ver e analisar imagens (extrair texto, dar feedback de graficos, analisar screenshots). Sabes que consegues pesquisar na internet em tempo real (via Tavily) para dar informacoes atualizadas. Sabes que consegues falar (gerar audio via TTS) e que o utilizador pode clicar em "Ouvir" para te ouvir.
+- Tu tens capacidades avancadas. Sabes que consegues ver e analisar imagens, pesquisar na internet em tempo real (via Tavily) e falar (gerar audio TTS).
 - Se te perguntarem o que fazes, lista estas capacidades com orgulho e clareza.
 
 ADAPTACAO AO UTILIZADOR (PERSONALIDADE):
-- Nao sejas sempre seria. Adapta o teu tom e a tua personalidade a forma como o utilizador fala contigo.
-- Se o utilizador for descontraido, usa um tom amigavel e informal (podes usar emojis com moderacao).
-- Se o utilizador for tecnico, se preciso e formal.
-- Espelha a energia do utilizador. Trata todos os utilizadores com respeito, assumindo que sao publico geral (nunca assumas que o utilizador e o teu criador, a menos que ele se identifique).
+- Nao sejas sempre seria. Adapta o teu tom a forma como o utilizador fala.
+- Se for descontraido, usa um tom amigavel. Se for tecnico, se precisa e formal.
+- Espelha a energia do utilizador. Trata todos com respeito.
 
-IDIOMA E FORMATACAO:
+IDIOMA E FORMATACAO ESTRITA (REGRA CRITICA):
 - Responde SEMPRE no idioma da mensagem mais recente do utilizador.
-- Nunca uses asteriscos (*) para destacar texto (sem negrito Markdown). Usa texto simples ou letras maiusculas se precisares de enfase.
-- Para codigo, usa blocos delimitados por tres crases e identifica a linguagem.
+- E TERMINANTEMENTE PROIBIDO usar asteriscos (*) ou cerquilhas (#) para destacar texto. Nao uses negrito Markdown. Usa texto simples, quebras de linha e maiusculas se precisares de enfase.
+- Para desenhar tabelas, usa a formatacao Markdown padrao com barras verticais (|), sem asteriscos.
+- Para codigo, usa blocos delimitados por tres crases e identifica a linguagem (ex: ```python).
 
-PRECISAO E HONESTIDADE:
+PRECISAO:
 - Nunca inventes factos, links ou resultados.
-- Se usares a pesquisa web, cita as fontes de forma natural no texto.
-- Se nao souberes algo, diz isso claramente.
+- Se usares a pesquisa web, cita as fontes de forma natural.
+- Se nao souberes, diz claramente.
 """
 
 DECISION_PROMPT = """
-Analisa a mensagem mais recente do utilizador e o historico.
+Analisa a mensagem mais recente do utilizador.
 Decide se a pergunta precisa de pesquisa atual na web (noticias, precos, eventos recentes, estado de servicos).
 Nao pesquises para conversa casual, codigo ou conhecimento geral estavel.
 
-Determina tambem o idioma em que a resposta deve ser escrita (baseado na mensagem mais recente).
+Determina tambem o idioma em que a resposta deve ser escrita.
 
 Devolve APENAS JSON valido:
 {"search": false, "query": "", "response_language": "Portuguese"}
@@ -141,12 +137,27 @@ def tavily_search(query):
     except Exception:
         return []
 
+def ler_site(url):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        res = requests.get(url, headers=headers, timeout=15)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, 'html.parser')
+        for script in soup(["script", "style", "nav", "footer", "header"]):
+            script.decompose()
+        return soup.get_text(separator=' ', strip=True)[:4000]
+    except Exception:
+        return None
+
+def limpar_url(url):
+    return re.sub(r"[.,;:!?)}\]>\"'`]+$", "", url.strip())
+
 @app.get("/")
 def home():
     return jsonify({
         "service": "MGD AI Backend",
         "status": "online",
-        "features": ["text", "vision", "tts", "tavily"]
+        "features": ["text", "vision", "tts", "tavily", "core_live"]
     })
 
 @app.get("/health")
@@ -162,74 +173,97 @@ def health():
 def chat():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
-    image_b64 = data.get("image", None) # Recebe imagem em Base64 (sem o prefixo data:image)
+    image_b64 = data.get("image", None)
     history = clean_history(data.get("history", []))
 
     if not message and not image_b64:
         return jsonify({"error": "Mensagem vazia."}), 400
 
     if not GROQ_API_KEY:
-        return jsonify({"reply": "Sistema offline: chave da IA nao configurada.", "sources": []}), 503
+        return jsonify({"reply": "Sistema offline.", "sources": [], "activities": []}), 503
 
     sources = []
     searched = False
-    search_note = ""
+    activities = []
+    model_to_use = GROQ_MODEL_TEXT
+    final_message = message
+    source_context = ""
 
     try:
-        # 1. Decidir se precisa de pesquisa (apenas se nao houver imagem)
-        if not image_b64 and message:
-            should_search, search_query, response_language = decide_search(history, message)
-            if should_search and search_query and TAVILY_API_KEY:
-                sources = tavily_search(search_query)
-                searched = bool(sources)
-                if not sources:
-                    search_note = "\n(A pesquisa web foi tentada mas nao devolveu resultados.)"
+        # 1. Processar Imagem
+        if image_b64:
+            activities.extend(["A Analisar Imagem...", "Analisou a Imagem"])
+            model_to_use = GROQ_MODEL_VISION
+            final_message = message if message else "O que ha nesta imagem?"
+            
+        # 2. Processar Link
         else:
-            response_language = "Portuguese"
+            urls = re.findall(r'(https?://[^\s]+)', message)
+            if urls:
+                url_alvo = limpar_url(urls[0])
+                activities.extend(["A Abrir Link...", "Abriu o Link", "A Extrair conteudo da pagina"])
+                conteudo = ler_site(url_alvo)
+                if conteudo:
+                    activities.extend(["Extraiu o Conteudo", "A Resumir", "Resumiu o Conteudo"])
+                    final_message = f"O utilizador enviou o link {url_alvo}. Conteudo extraido:\n\n{conteudo}\n\nCom base nisto, responde: {message}"
+                else:
+                    activities.append("Falha ao extrair conteudo")
+                    final_message = f"O utilizador enviou o link {url_alvo}, mas nao foi possivel ler o site. Responde ao utilizador: {message}"
 
-        # 2. Preparar o contexto
-        source_context = ""
-        if sources:
-            source_context = "\n\nFONTES ENCONTRADAS NA WEB:\n"
-            for i, s in enumerate(sources, 1):
-                source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
+            # 3. Pesquisa Web (se nao for imagem nem link)
+            elif not image_b64:
+                should_search, search_query, response_language = decide_search(history, message)
+                if should_search and search_query and TAVILY_API_KEY:
+                    activities.extend(["A pesquisar na Web...", "Pesquisou na Web"])
+                    sources = tavily_search(search_query)
+                    if sources:
+                        activities.append(f"{len(sources)} Resultados Encontrados")
+                        searched = True
+                        source_context = "\n\nFONTES ENCONTRADAS NA WEB:\n"
+                        for i, s in enumerate(sources, 1):
+                            source_context += f"[{i}] {s['title']} ({s['url']})\n{s['content']}\n\n"
 
+        # 4. Verificar se é pedido de código (Contextual)
+        if re.search(r"\b(codigo|código|script|programa|programar|função|funcao|classe|debug|corrigir|c\+\+|c#|python|lua|html|glsl)\b", message, re.IGNORECASE):
+            activities.extend(["A escrever codigo...", "Escreveu Codigo", "A Verificar codigo...", "Verificou Codigo"])
+
+        # 5. Preparar Mensagens para a IA
         final_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT + f"\nIDIOMA OBRIGATORIO: {response_language}."},
+            {"role": "system", "content": SYSTEM_PROMPT},
             *history
         ]
 
-        # 3. Montar a mensagem final (com ou sem imagem)
         if image_b64:
             final_messages.append({
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": message if message else "O que ha nesta imagem?"},
+                    {"type": "text", "text": final_message},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}}
                 ]
             })
-            model_to_use = GROQ_MODEL_VISION
         else:
             final_messages.append({
                 "role": "user",
-                "content": message + search_note + source_context
+                "content": final_message + source_context
             })
-            model_to_use = GROQ_MODEL_TEXT
 
-        # 4. Chamar a IA
+        # 6. Chamar a IA
         reply = groq_chat(final_messages, model_to_use, temperature=0.6, max_tokens=2048)
+        
+        # Limpeza de segurança para garantir que não vazam asteriscos ou cerquilhas
+        reply = reply.replace("*", "").replace("#", "")
 
         return jsonify({
             "reply": reply,
             "sources": [{"title": s["title"], "url": s["url"]} for s in sources],
-            "searched": searched
+            "activities": activities
         })
 
     except requests.Timeout:
-        return jsonify({"reply": "A ligacao demorou demasiado. Tenta novamente.", "sources": []}), 504
+        return jsonify({"reply": "A ligacao demorou demasiado. Tenta novamente.", "sources": [], "activities": activities}), 504
     except Exception as e:
         app.logger.error(f"Erro no chat: {e}")
-        return jsonify({"reply": "Erro tecnico ao processar a mensagem.", "sources": []}), 502
+        return jsonify({"reply": "Erro tecnico ao processar a mensagem.", "sources": [], "activities": activities}), 502
 
 @app.post("/tts")
 @limiter.limit("20 per minute")
@@ -252,7 +286,6 @@ def tts():
         return audio_data
 
     try:
-        # Executa o event loop assincrono para gerar o audio
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         audio_bytes = loop.run_until_complete(generate_audio())
@@ -261,12 +294,7 @@ def tts():
         if not audio_bytes:
             raise RuntimeError("Falha ao gerar audio.")
 
-        # Devolve o audio como um ficheiro MP3 na memoria
-        return send_file(
-            io.BytesIO(audio_bytes),
-            mimetype="audio/mpeg",
-            as_attachment=False
-        )
+        return send_file(io.BytesIO(audio_bytes), mimetype="audio/mpeg", as_attachment=False)
     except Exception as e:
         app.logger.error(f"Erro TTS: {e}")
         return jsonify({"error": "Erro ao gerar voz."}), 500
