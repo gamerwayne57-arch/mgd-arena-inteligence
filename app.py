@@ -636,10 +636,12 @@ def diagnostico_groq():
     # TESTAR MODELO DE VISÃO
     # -----------------------------------------------------
 
+    # PNG válido de 64x64 pixels.
+    # Contém um quadrado azul e um círculo amarelo.
+
     imagem_teste = (
         "data:image/png;base64,"
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1Pe"
-        "AAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
+        "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAy0lEQVR42u3aMQ6AIBBEUSHe/8pY2FhAiM4gbPjbasg8QVyNqZRyRK58BC8AAAAAmFtn60BKawVtPa5YQgAAAAAAAACAEb2Q3LqkWn9VAgCq0Z+HvIzzn+jjGPnn9J/PHwv4lsZiyLPSuwzbPwf0SyiOsPcMuHYSZRx6IQAAAAQGuDpKZZztl5A+CeII3MTaJdQnME+8Cy17gG0JvU3j2sGcL/V3pm5rue5XiS4jxnehcVnZRgEAAAAAAIDlqtlKRPmdlCUEAAAAAFJdTc87jBJxyJYAAAAASUVORK5CYII="
     )
 
     resultado["teste_visao"] = testar_modelo(
