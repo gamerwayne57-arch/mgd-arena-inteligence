@@ -64,44 +64,13 @@ header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: v
 .action-btn { background: none; border: 1px solid var(--border); border-radius: 20px; color: var(--text-light); padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 .action-btn:hover { background: #eee; }
 
-/* =========================================
-   CÓDIGO E TABELAS (CORRIGIDO)
-   ========================================= */
-.code-container { 
-    background: #1e1e1e; 
-    border-radius: 10px; 
-    margin: 10px 0; 
-    max-width: 100%;
-    overflow: hidden; 
-    border: 1px solid #333;
-}
-.code-header { 
-    display: flex; justify-content: space-between; align-items: center; 
-    background: #2d2d2d; padding: 8px 15px; color: #ccc; font-size: 12px; 
-    border-bottom: 1px solid #444;
-}
+/* CÓDIGO E TABELAS */
+.code-container { background: #1e1e1e; border-radius: 10px; margin: 10px 0; max-width: 100%; overflow: hidden; border: 1px solid #333; }
+.code-header { display: flex; justify-content: space-between; align-items: center; background: #2d2d2d; padding: 8px 15px; color: #ccc; font-size: 12px; border-bottom: 1px solid #444; }
 .copy-btn { background: #444; border: none; color: #fff; border-radius: 5px; padding: 4px 10px; cursor: pointer; font-size: 11px; font-weight: 600; }
 .copy-btn:hover { background: #555; }
-
-/* Forçar fundo escuro e scroll no código */
-pre { 
-    margin: 0; 
-    padding: 0; 
-    overflow-x: auto; 
-    max-width: 100%;
-    background: #1e1e1e !important; 
-}
-code { 
-    display: block; 
-    padding: 15px; 
-    font-family: monospace; 
-    font-size: 14px; 
-    background: transparent !important; 
-    white-space: pre; 
-    color: #f8f8f2;
-}
-
-/* TABELAS */
+pre { margin: 0; padding: 0; overflow-x: auto; max-width: 100%; background: #1e1e1e !important; }
+code { display: block; padding: 15px; font-family: monospace; font-size: 14px; background: transparent !important; white-space: pre; color: #f8f8f2; }
 table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
 th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
 th { background: #f1f1f1; font-weight: 600; }
@@ -118,6 +87,7 @@ th { background: #f1f1f1; font-weight: 600; }
 .input-box input[type="text"] { width: 100%; border: none; background: transparent; outline: none; font-size: 15px; font-family: inherit; }
 .send-btn { background: var(--red); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; flex-shrink: 0; cursor: pointer; display: flex; justify-content: center; align-items: center; }
 .send-btn svg { width: 18px; height: 18px; fill: white; }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ERRO DE REDE */
 .network-error { position: fixed; top: 65px; left: 50%; transform: translateX(-50%); background: rgba(50, 50, 50, 0.85); color: white; backdrop-filter: blur(5px); padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 2000; display: none; text-align: center; width: max-content; max-width: 90%; }
@@ -163,7 +133,7 @@ th { background: #f1f1f1; font-weight: 600; }
     <div class="input-row">
         <button class="plus-btn" onclick="document.getElementById('file-input').click()">+</button>
         <div class="input-box">
-            <input type="text" id="message-input" placeholder="Message MGD AI..." onkeypress="handleEnter(event)">
+            <input type="text" id="message-input" placeholder="Message MGD AI..." onkeydown="handleEnter(event)">
         </div>
         <button class="send-btn" id="send-btn" onclick="sendMessage()">
             <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
@@ -181,35 +151,47 @@ th { background: #f1f1f1; font-weight: 600; }
     let serverAwake = false;
 
     // ==========================================
-    // INDEXED DB
+    // GESTÃO DE DADOS (INDEXEDDB ROBUSTO)
     // ==========================================
     let db;
-    const request = indexedDB.open('MGD_AI_DB', 1);
+    const request = indexedDB.open('MGD_AI_DB', 2);
+
     request.onupgradeneeded = (e) => {
         db = e.target.result;
         if (!db.objectStoreNames.contains('chats')) {
-            db.createObjectStore('chats');
+            db.createObjectStore('chats', { keyPath: 'id' });
         }
     };
+
     request.onsuccess = (e) => {
         db = e.target.result;
         loadConversations();
     };
 
-    function saveDB() {
+    request.onerror = (e) => {
+        console.error("Erro no IndexedDB:", e);
+        alert("O teu navegador bloqueou o armazenamento local. O histórico pode não ser guardado.");
+    };
+
+    function saveChatToDB(chat) {
         if (!db) return;
         const tx = db.transaction('chats', 'readwrite');
-        tx.objectStore('chats').put(conversations, 'history');
+        tx.objectStore('chats').put(chat);
     }
 
     function loadConversations() {
         if (!db) return;
         const tx = db.transaction('chats', 'readonly');
-        const req = tx.objectStore('chats').get('history');
+        const req = tx.objectStore('chats').getAll();
+        
         req.onsuccess = () => {
             if (req.result && req.result.length > 0) {
-                conversations = req.result;
-                loadChat(conversations[0].id);
+                conversations = req.result.sort((a, b) => b.id.localeCompare(a.id));
+                
+                const savedActiveId = localStorage.getItem('mgd_active_chat');
+                const chatToLoad = conversations.find(c => c.id === savedActiveId) || conversations[0];
+                
+                loadChat(chatToLoad.id);
             } else {
                 createNewChat();
             }
@@ -238,22 +220,23 @@ th { background: #f1f1f1; font-weight: 600; }
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                if (data.app !== "MGD AI" || !Array.isArray(data.conversations)) {
-                    throw new Error("Ficheiro inválido.");
-                }
+                if (data.app !== "MGD AI" || !Array.isArray(data.conversations)) throw new Error("Inválido");
+                
                 const existingIds = conversations.map(c => c.id);
                 let importedCount = 0;
+                
                 data.conversations.forEach(chat => {
                     if (!existingIds.includes(chat.id)) {
                         conversations.push(chat);
+                        saveChatToDB(chat);
                         importedCount++;
                     }
                 });
-                saveDB();
+                
                 renderSidebar();
-                alert(`Importação concluída! ${importedCount} novas conversas adicionadas.`);
+                alert(`Importação concluída! ${importedCount} conversas adicionadas.`);
             } catch (err) {
-                alert("Erro ao importar: O ficheiro não é um backup válido do MGD AI.");
+                alert("Erro: O ficheiro não é um backup válido do MGD AI.");
             }
         };
         reader.readAsText(file);
@@ -276,8 +259,10 @@ th { background: #f1f1f1; font-weight: 600; }
     function createNewChat() {
         const newChat = { id: 'chat_' + Date.now(), title: 'Nova Conversa', history: [] };
         conversations.unshift(newChat);
-        saveDB();
+        saveChatToDB(newChat);
         activeChatId = newChat.id;
+        localStorage.setItem('mgd_active_chat', activeChatId);
+        
         renderSidebar();
         document.getElementById('chat-container').innerHTML = '';
         closeSidebar();
@@ -287,18 +272,17 @@ th { background: #f1f1f1; font-weight: 600; }
 
     function loadChat(id) {
         activeChatId = id;
+        localStorage.setItem('mgd_active_chat', activeChatId);
         renderSidebar();
+        
         const chat = conversations.find(c => c.id === id);
         const container = document.getElementById('chat-container');
         container.innerHTML = '';
         
-        if (chat && chat.history.length > 0) {
+        if (chat && chat.history && chat.history.length > 0) {
             chat.history.forEach(msg => {
-                if (msg.role === 'user') {
-                    addUserMessageToDOM(msg.content, msg.imageSrc || null);
-                } else if (msg.role === 'assistant') {
-                    addAIMessageToDOM(msg.content, msg.timeTaken, msg.sources || []);
-                }
+                if (msg.role === 'user') addUserMessageToDOM(msg.content, msg.imageSrc || null);
+                else if (msg.role === 'assistant') addAIMessageToDOM(msg.content, msg.timeTaken, msg.sources || []);
             });
         }
         closeSidebar();
@@ -310,13 +294,18 @@ th { background: #f1f1f1; font-weight: 600; }
         conversations.forEach(chat => {
             const div = document.createElement('div');
             div.className = `history-item ${chat.id === activeChatId ? 'active' : ''}`;
-            div.textContent = chat.title;
+            div.textContent = chat.title || "Nova Conversa";
             div.onclick = () => loadChat(chat.id);
             list.appendChild(div);
         });
     }
 
-    function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+    function handleEnter(e) { 
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage(); 
+        }
+    }
 
     function handleImageUpload(event) {
         const file = event.target.files[0];
@@ -335,7 +324,6 @@ th { background: #f1f1f1; font-weight: 600; }
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                
                 currentImageBase64 = dataUrl.split(',')[1];
                 document.getElementById('image-preview-img').src = dataUrl;
                 document.getElementById('image-preview-container').style.display = 'block';
@@ -388,7 +376,6 @@ th { background: #f1f1f1; font-weight: 600; }
         bubble.className = 'bubble';
         bubble.innerHTML = formatResponse(text);
         row.appendChild(bubble);
-
         bubble.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
 
         if (sources && sources.length > 0) {
@@ -455,9 +442,6 @@ th { background: #f1f1f1; font-weight: 600; }
         return processedHtml.join('<br>').replace(/<br><table>/g, '<table>').replace(/<\/table><br>/g, '</table>');
     }
 
-    // ==========================================
-    // COPIAR CÓDIGO (CORRIGIDO COM FALLBACK)
-    // ==========================================
     function copyCode(btn) {
         const codeEl = btn.closest('.code-container').querySelector('code');
         const textToCopy = codeEl.innerText;
@@ -509,7 +493,8 @@ th { background: #f1f1f1; font-weight: 600; }
         input.value = '';
         cancelImage(); 
         isProcessing = true;
-        document.getElementById('send-btn').style.opacity = '0.5';
+        const sendBtn = document.getElementById('send-btn');
+        sendBtn.disabled = true;
         
         const container = document.getElementById('chat-container');
         const aiRow = document.createElement('div');
@@ -519,7 +504,7 @@ th { background: #f1f1f1; font-weight: 600; }
         coreLive.className = 'core-live';
         
         if (!serverAwake) {
-            coreLive.innerHTML = '<div class="core-live-step">A Ligar o Servidor MGD (Isto pode demorar até 50 segundos)...</div>';
+            coreLive.innerHTML = '<div class="core-live-step">A Ligar o Servidor MGD...</div>';
         } else {
             coreLive.innerHTML = '<div class="core-live-step">A processar pedido...</div>';
         }
@@ -530,19 +515,45 @@ th { background: #f1f1f1; font-weight: 600; }
         const startTime = Date.now();
         
         try {
-            const chat = conversations.find(c => c.id === activeChatId);
+            let chat = conversations.find(c => c.id === activeChatId);
+            
+            if (!chat) {
+                chat = { id: 'chat_' + Date.now(), title: 'Nova Conversa', history: [] };
+                conversations.unshift(chat);
+                activeChatId = chat.id;
+                localStorage.setItem('mgd_active_chat', activeChatId);
+            }
+
             if (chat.history.length === 0) {
                 chat.title = text ? (text.substring(0, 25) + (text.length > 25 ? '...' : '')) : "Análise de Imagem";
                 renderSidebar();
             }
 
+            const historyForBackend = chat.history.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }));
+
             const response = await fetch(`${API}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: textToSend, image: imgToSend, history: chat.history })
+                body: JSON.stringify({
+                    message: textToSend,
+                    image: imgToSend,
+                    history: historyForBackend
+                })
             });
             
-            if (!response.ok) throw new Error("Network response was not ok");
+            if (!response.ok) {
+                let errorMsg = `Erro no servidor (${response.status}).`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.reply) errorMsg = errorData.reply;
+                } catch(e) {}
+                
+                if (response.status === 429) errorMsg = "Estás a enviar mensagens muito rápido. Aguarda um minuto.";
+                throw new Error(errorMsg);
+            }
             
             const data = await response.json();
             serverAwake = true;
@@ -597,7 +608,7 @@ th { background: #f1f1f1; font-weight: 600; }
 
             chat.history.push({ role: 'user', content: textToSend, imageSrc: dataUrlToSave });
             chat.history.push({ role: 'assistant', content: data.reply, timeTaken: seconds, sources: data.sources });
-            saveDB();
+            saveChatToDB(chat);
 
             document.getElementById('network-error').classList.remove('show');
 
@@ -606,12 +617,19 @@ th { background: #f1f1f1; font-weight: 600; }
             const errBubble = document.createElement('div');
             errBubble.className = 'bubble';
             errBubble.style.color = 'var(--red)';
-            errBubble.textContent = "Erro ao comunicar com o servidor.";
+            errBubble.style.background = '#ffebee';
+            
+            if (error.message.includes("Failed to fetch") || error.name === "TypeError") {
+                errBubble.textContent = "Falha de rede. Verifica a tua ligação à internet.";
+                document.getElementById('network-error').classList.add('show');
+            } else {
+                errBubble.textContent = error.message;
+            }
+            
             aiRow.appendChild(errBubble);
-            document.getElementById('network-error').classList.add('show');
         } finally {
             isProcessing = false;
-            document.getElementById('send-btn').style.opacity = '1';
+            sendBtn.disabled = false;
             scrollToBottom();
         }
     }
