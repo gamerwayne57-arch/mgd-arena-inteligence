@@ -536,44 +536,73 @@ th { background: #f1f1f1; font-weight: 600; }
 
             const response = await fetch(`${API}/chat`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
                 body: JSON.stringify({
                     message: textToSend,
                     image: imgToSend,
                     history: historyForBackend
                 })
             });
-            
+
             if (!response.ok) {
                 let errorMsg = `Erro no servidor (${response.status}).`;
                 try {
                     const errorData = await response.json();
-                    if (errorData.reply) errorMsg = errorData.reply;
+                    if (errorData.error || errorData.reply) errorMsg = errorData.error || errorData.reply;
                 } catch(e) {}
-                
                 if (response.status === 429) errorMsg = "Estás a enviar mensagens muito rápido. Aguarda um minuto.";
                 throw new Error(errorMsg);
             }
-            
-            const data = await response.json();
-            serverAwake = true;
-            
-            const endTime = Date.now();
-            const seconds = ((endTime - startTime) / 1000).toFixed(1);
-            
-            if (data.activities && data.activities.length > 0) {
-                coreLive.innerHTML = '';
-                for (let i = 0; i < data.activities.length; i++) {
-                    await new Promise(r => setTimeout(r, 600));
+
+            if (!response.body) throw new Error('O navegador não suporta a transmissão em tempo real.');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let data = null;
+
+            function processSSEBlock(block) {
+                let eventName = 'message';
+                let payload = '';
+                block.split(/\r?\n/).forEach(line => {
+                    if (line.startsWith('event:')) eventName = line.slice(6).trim();
+                    else if (line.startsWith('data:')) payload += line.slice(5).trim();
+                });
+                if (!payload) return;
+                let parsed;
+                try { parsed = JSON.parse(payload); } catch(e) { return; }
+
+                if (eventName === 'activity') {
                     const step = document.createElement('div');
                     step.className = 'core-live-step';
-                    step.textContent = data.activities[i];
+                    step.textContent = parsed.message || 'A processar...';
                     coreLive.appendChild(step);
                     scrollToBottom();
+                } else if (eventName === 'done') {
+                    data = parsed;
+                } else if (eventName === 'error') {
+                    throw new Error(parsed.message || 'Ocorreu um erro durante o processamento.');
                 }
-                await new Promise(r => setTimeout(r, 500)); 
             }
-            
+
+            while (true) {
+                const { value, done: streamDone } = await reader.read();
+                if (streamDone) break;
+                buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+                const blocks = buffer.split('\n\n');
+                buffer = blocks.pop() || '';
+                blocks.forEach(processSSEBlock);
+            }
+            buffer += decoder.decode();
+            if (buffer.trim()) processSSEBlock(buffer);
+            if (!data) throw new Error('A ligação terminou antes de a resposta ficar concluída.');
+
+            serverAwake = true;
+            const endTime = Date.now();
+            const seconds = ((endTime - startTime) / 1000).toFixed(1);
             if (aiRow.contains(coreLive)) aiRow.removeChild(coreLive);
             
             const timeLabel = document.createElement('div');

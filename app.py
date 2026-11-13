@@ -9,7 +9,7 @@ import time
 import secrets
 
 from bs4 import BeautifulSoup
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, Response, jsonify, request, send_file, send_from_directory, stream_with_context
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -720,243 +720,150 @@ def chat():
 
     data = request.get_json(silent=True) or {}
 
-    message = str(
-        data.get("message", "")
-    ).strip()
-
-    image_b64 = data.get("image", None)
+    message = str(data.get("message", "")).strip()
+    image_b64 = data.get("image")
 
     if image_b64 and not isinstance(image_b64, str):
         image_b64 = None
 
-    # Validar imagem atual
     current_image = normalizar_imagem(image_b64)
-
-    # Preparar histórico incluindo imagens anteriores
-    history = clean_history(
-        data.get("history", [])
-    )
+    history = clean_history(data.get("history", []))
 
     if not message and not current_image:
+        return jsonify({"error": "Mensagem vazia."}), 400
 
-        return jsonify({
-            "error": "Mensagem vazia."
-        }), 400
+    def event_stream():
+        """Envia eventos apenas quando cada etapa começa ou termina."""
+        sources = []
+        model_to_use = GROQ_MODEL_TEXT
+        final_message = message
+        source_context = ""
+        activities = []
 
-    sources = []
-    activities = []
-
-    model_to_use = GROQ_MODEL_TEXT
-
-    final_message = message
-    source_context = ""
-
-    try:
-
-        # =================================================
-        # ETAPA 1 — DETECTAR IMAGENS NO CONTEXTO
-        # =================================================
-
-        history_has_images = any(
-            isinstance(item.get("content"), list)
-            for item in history
-        )
-
-        if current_image:
-
-            activities.extend([
-                "A Analisar Imagem...",
-                "Analisou a Imagem"
-            ])
-
-            model_to_use = GROQ_MODEL_VISION
-
-            final_message = (
-                message if message
-                else "O que ha nesta imagem?"
+        def emit(event_name, payload):
+            return (
+                f"event: {event_name}\n"
+                f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
             )
 
-        elif history_has_images:
+        def activity(label):
+            activities.append(label)
+            return emit("activity", {"message": label})
 
-            # Existe uma imagem anterior na conversa.
-            # Utilizar o modelo de visão para preservar
-            # a capacidade de interpretar esse contexto.
+        try:
+            yield activity("Pedido recebido; a interpretar o contexto")
 
-            model_to_use = GROQ_MODEL_VISION
-
-        # =================================================
-        # ETAPA 2 — LINKS E PESQUISA
-        # =================================================
-
-        if not current_image:
-
-            urls = re.findall(
-                r"(https?://[^\s]+)",
-                message
+            history_has_images = any(
+                isinstance(item.get("content"), list) for item in history
             )
 
-            if urls:
+            if current_image:
+                model_to_use = GROQ_MODEL_VISION
+                final_message = message or "O que há nesta imagem?"
+                yield activity("Imagem recebida e validada; análise visual preparada")
+            elif history_has_images:
+                model_to_use = GROQ_MODEL_VISION
+                yield activity("A recuperar o contexto visual da conversa")
 
-                url_alvo = limpar_url(urls[0])
+            if not current_image:
+                urls = re.findall(r"(https?://[^\s]+)", message)
 
-                activities.extend([
-                    "A Abrir Link...",
-                    "Abriu o Link",
-                    "A Extrair conteudo da pagina"
-                ])
+                if urls:
+                    url_alvo = limpar_url(urls[0])
+                    yield activity("A abrir o link enviado")
+                    conteudo = ler_site(url_alvo)
 
-                conteudo = ler_site(url_alvo)
-
-                if conteudo:
-
-                    activities.extend([
-                        "Extraiu o Conteudo",
-                        "A Resumir",
-                        "Resumiu o Conteudo"
-                    ])
-
-                    final_message = (
-                        f"O utilizador enviou o link {url_alvo}. "
-                        f"Conteudo:\n\n{conteudo}\n\n"
-                        f"Responde: {message}."
-                    )
-
+                    if conteudo:
+                        yield activity("Página lida; conteúdo extraído")
+                        final_message = (
+                            f"O utilizador enviou o link {url_alvo}. "
+                            f"Conteúdo:\n\n{conteudo}\n\nResponde: {message}."
+                        )
+                    else:
+                        yield activity("Não foi possível extrair o conteúdo do site")
+                        final_message = (
+                            f"O utilizador enviou o link {url_alvo}, mas o site bloqueou a leitura. "
+                            "Pede para ele copiar e colar o texto. PROIBIDO inventar."
+                        )
                 else:
-
-                    activities.append(
-                        "Falha ao extrair conteudo"
-                    )
-
-                    final_message = (
-                        f"O utilizador enviou o link {url_alvo}, "
-                        "mas o site bloqueou a leitura. "
-                        "Pede para ele copiar e colar o texto. "
-                        "PROIBIDO inventar."
-                    )
-
-            else:
-
-                precisa_pesquisar = bool(
-                    re.search(
-                        r"(noticias|hoje|agora|preco|tempo|clima|"
-                        r"resultado|jogo|versao|atual|recente|"
-                        r"2026|2025)",
+                    # Mantém-se a lógica de pesquisa atual nesta etapa.
+                    # A decisão contextual de pesquisar será melhorada na próxima fase.
+                    precisa_pesquisar = bool(re.search(
+                        r"(noticias|hoje|agora|preco|tempo|clima|resultado|jogo|versao|atual|recente|2026|2025)",
                         message,
                         re.IGNORECASE
-                    )
+                    ))
+
+                    if precisa_pesquisar and TAVILY_API_KEY:
+                        yield activity("A pesquisar na Web")
+                        sources = tavily_search(message)
+                        if sources:
+                            yield activity(f"Pesquisa concluída; {len(sources)} fontes encontradas")
+                            source_context = "\n\nFONTES:\n"
+                            for i, source in enumerate(sources, 1):
+                                source_context += (
+                                    f"[{i}] {source['title']} ({source['url']})\n"
+                                    f"{source['content']}\n\n"
+                                )
+                        else:
+                            yield activity("Pesquisa concluída sem resultados utilizáveis")
+
+            yield activity("A preparar o contexto para a resposta")
+
+            final_messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                *history
+            ]
+
+            if current_image:
+                final_messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": final_message},
+                        {"type": "image_url", "image_url": {"url": current_image}}
+                    ]
+                })
+            else:
+                final_messages.append({
+                    "role": "user",
+                    "content": final_message + source_context
+                })
+
+            yield activity("A gerar a resposta com a IA")
+            reply = groq_chat_with_retry(
+                final_messages,
+                model_to_use,
+                temperature=0.6,
+                max_tokens=2048
+            )
+            reply = str(reply).replace("*", "").replace("#", "")
+
+            yield activity("Resposta gerada com sucesso")
+            yield emit("done", {
+                "reply": reply,
+                "sources": sources,
+                "activities": activities
+            })
+
+        except Exception as e:
+            app.logger.error(f"Erro no chat: {e}")
+            yield emit("error", {
+                "message": (
+                    "Limite de pedidos atingido. Aguarda um minuto."
+                    if "Limite de pedidos" in str(e)
+                    else f"Erro técnico: {str(e)}"
                 )
-
-                if precisa_pesquisar and TAVILY_API_KEY:
-
-                    activities.extend([
-                        "A pesquisar na Web...",
-                        "Pesquisou na Web"
-                    ])
-
-                    sources = tavily_search(message)
-
-                    if sources:
-
-                        activities.append(
-                            f"{len(sources)} Resultados Encontrados"
-                        )
-
-                        source_context = "\n\nFONTES:\n"
-
-                        for i, s in enumerate(sources, 1):
-
-                            source_context += (
-                                f"[{i}] {s['title']} "
-                                f"({s['url']})\n"
-                                f"{s['content']}\n\n"
-                            )
-
-        # =================================================
-        # ETAPA 3 — CONSTRUIR CONTEXTO COMPLETO
-        # =================================================
-
-        final_messages = [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT
-            },
-            *history
-        ]
-
-        # Mensagem atual com imagem
-        if current_image:
-
-            final_messages.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": final_message
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": current_image
-                        }
-                    }
-                ]
             })
 
-        # Mensagem atual sem imagem
-        else:
-
-            final_messages.append({
-                "role": "user",
-                "content": final_message + source_context
-            })
-
-        # =================================================
-        # ETAPA 4 — CHAMAR GROQ
-        # =================================================
-
-        reply = groq_chat_with_retry(
-            final_messages,
-            model_to_use,
-            temperature=0.6,
-            max_tokens=2048
-        )
-
-        reply = str(reply).replace("*", "").replace("#", "")
-
-        if "```" in reply:
-
-            activities.extend([
-                "A escrever código...",
-                "Escreveu Código",
-                "A Verificar código...",
-                "Verificou Código"
-            ])
-
-        # =================================================
-        # ETAPA 5 — RESPOSTA
-        # =================================================
-
-        return jsonify({
-            "reply": reply,
-            "sources": sources,
-            "activities": activities
-        })
-
-    except Exception as e:
-
-        app.logger.error(
-            f"Erro no chat: {e}"
-        )
-
-        return jsonify({
-            "reply": f"Erro técnico: {str(e)}",
-            "sources": [],
-            "activities": activities
-        }), (
-            429
-            if "Limite de pedidos" in str(e)
-            else 500
-        )
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive"
+        }
+    )
 
 
 # =========================================================
