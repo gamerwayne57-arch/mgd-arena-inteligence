@@ -9,7 +9,7 @@ import time
 import secrets
 
 from bs4 import BeautifulSoup
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -674,10 +674,12 @@ def diagnostico_groq():
 
 @app.get("/")
 def home():
-
-    return jsonify({
-        "status": "online"
-    })
+    # Serve a interface web a partir do mesmo serviço Render.
+    # O index.html deve estar na mesma pasta deste app.py.
+    return send_from_directory(
+        os.path.dirname(os.path.abspath(__file__)),
+        "index.html"
+    )
 
 
 @app.get("/health")
