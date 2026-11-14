@@ -52,6 +52,9 @@ header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: v
 .bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; max-width: 85%; word-wrap: break-word; }
 .msg-row.user .bubble { background: var(--red); color: white; border-bottom-right-radius: 4px; }
 .msg-row.ai .bubble { background: var(--chat-bg); color: var(--text); border-bottom-left-radius: 4px; }
+.bubble a { color: var(--red); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.msg-row.user .bubble a { color: #fff; background: rgba(255,255,255,0.16); border-radius: 4px; padding: 0 2px; }
+.bubble a:hover { text-decoration-thickness: 2.5px; }
 
 /* CORE LIVE */
 .core-live { font-size: 13px; color: #888; font-style: italic; padding: 5px 0; display: flex; flex-direction: column; gap: 4px; }
@@ -358,7 +361,7 @@ th { background: #f1f1f1; font-weight: 600; }
         if (text) {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
-            bubble.textContent = text;
+            bubble.innerHTML = formatResponse(text, { linkifyOnly: true });
             row.appendChild(bubble);
         }
         container.appendChild(row);
@@ -383,14 +386,7 @@ th { background: #f1f1f1; font-weight: 600; }
         row.appendChild(bubble);
         bubble.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
 
-        if (sources && sources.length > 0) {
-            const sourcesDiv = document.createElement('div');
-            sourcesDiv.style.marginTop = '10px';
-            sourcesDiv.style.fontSize = '12px';
-            sourcesDiv.innerHTML = '<strong>Fontes:</strong><br>' + 
-                sources.map(s => `<a href="${s.url}" target="_blank" style="color:var(--red); text-decoration:underline;">${s.title}</a>`).join('<br>');
-            bubble.appendChild(sourcesDiv);
-        }
+        appendSources(bubble, sources);
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions';
@@ -405,46 +401,111 @@ th { background: #f1f1f1; font-weight: 600; }
         scrollToBottom();
     }
 
-    function sanitizeText(text) { return text.replace(/[*#]/g, ''); }
+    function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+    }
 
-    function formatResponse(text) {
-        let html = sanitizeText(text);
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
-            const language = lang || 'plaintext';
-            const escapedCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            return `
-                <div class="code-container">
-                    <div class="code-header">
-                        <span>${language.toUpperCase()}</span>
-                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
-                    </div>
-                    <pre><code class="language-${language}">${escapedCode}</code></pre>
-                </div>
-            `;
+    function safeLink(rawUrl) {
+        let candidate = String(rawUrl || '').trim();
+        if (/^www\./i.test(candidate)) candidate = 'https://' + candidate;
+        try {
+            const parsed = new URL(candidate);
+            return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : null;
+        } catch (_) { return null; }
+    }
+
+    function linkifyEscapedText(escaped) {
+        // Primeiro protege links Markdown para não voltar a processar o URL
+        // que ficará dentro do atributo href.
+        const markdownLinks = [];
+        escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|www\.[^\s)]+)\)/gi, (match, label, raw) => {
+            const href = safeLink(raw);
+            if (!href) return match;
+            const token = `@@MGDLINK${markdownLinks.length}@@`;
+            markdownLinks.push(`<a href="${escapeHTML(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`);
+            return token;
         });
 
-        const lines = html.split('\n');
+        // URLs simples, incluindo www., sem absorver pontuação final.
+        escaped = escaped.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi, raw => {
+            let url = raw;
+            let trailing = '';
+            while (/[.,!?;:)]$/.test(url)) {
+                trailing = url.slice(-1) + trailing;
+                url = url.slice(0, -1);
+            }
+            const href = safeLink(url);
+            return href ? `<a href="${escapeHTML(href)}" target="_blank" rel="noopener noreferrer">${url}</a>${trailing}` : raw;
+        });
+        markdownLinks.forEach((link, index) => { escaped = escaped.replace(`@@MGDLINK${index}@@`, link); });
+        return escaped;
+    }
+
+    function formatResponse(text, options = {}) {
+        const source = String(text || '');
+        if (options.linkifyOnly) return linkifyEscapedText(escapeHTML(source)).replace(/\n/g, '<br>');
+
+        // Isola blocos de código antes de escapar e transformar links, para que
+        // URLs e HTML dentro do código permaneçam texto e não virem links.
+        const codeBlocks = [];
+        let working = source.replace(/```([\w+-]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+            const language = (lang || 'plaintext').replace(/[^\w+-]/g, '') || 'plaintext';
+            const safeCode = escapeHTML(code);
+            const block = `<div class="code-container"><div class="code-header"><span>${escapeHTML(language.toUpperCase())}</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-${escapeHTML(language)}">${safeCode}</code></pre></div>`;
+            const token = `@@MGDCODE${codeBlocks.length}@@`;
+            codeBlocks.push(block);
+            return token;
+        });
+
+        working = linkifyEscapedText(escapeHTML(working));
+
+        // Conversão simples de tabelas Markdown, mantendo conteúdo escapado.
+        const lines = working.split('\n');
         let inTable = false;
         let tableHtml = '';
-        let processedHtml = [];
-
+        const output = [];
         lines.forEach(line => {
             if (line.includes('|') && line.split('|').length > 2) {
                 if (!inTable) { inTable = true; tableHtml = '<table>'; }
-                if (!line.includes('---')) {
+                if (!/^\s*\|?\s*:?-{3,}/.test(line)) {
                     const cells = line.split('|').filter(c => c.trim() !== '');
-                    tableHtml += '<tr>';
-                    cells.forEach(cell => tableHtml += `<td>${cell.trim()}</td>`);
-                    tableHtml += '</tr>';
+                    tableHtml += '<tr>' + cells.map(c => `<td>${c.trim()}</td>`).join('') + '</tr>';
                 }
             } else {
-                if (inTable) { tableHtml += '</table>'; processedHtml.push(tableHtml); inTable = false; }
-                processedHtml.push(line);
+                if (inTable) { tableHtml += '</table>'; output.push(tableHtml); inTable = false; }
+                output.push(line);
             }
         });
-        if (inTable) { tableHtml += '</table>'; processedHtml.push(tableHtml); }
+        if (inTable) { tableHtml += '</table>'; output.push(tableHtml); }
 
-        return processedHtml.join('<br>').replace(/<br><table>/g, '<table>').replace(/<\/table><br>/g, '</table>');
+        let html = output.join('<br>').replace(/<br><table>/g, '<table>').replace(/<\/table><br>/g, '</table>');
+        codeBlocks.forEach((block, index) => { html = html.replace(`@@MGDCODE${index}@@`, block); });
+        return html;
+    }
+
+    function appendSources(container, sources) {
+        if (!Array.isArray(sources) || !sources.length) return;
+        const validSources = sources.filter(s => s && safeLink(s.url));
+        if (!validSources.length) return;
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.className = 'sources-list';
+        sourcesDiv.style.marginTop = '10px';
+        sourcesDiv.style.fontSize = '12px';
+        const heading = document.createElement('strong');
+        heading.textContent = 'Fontes:';
+        sourcesDiv.appendChild(heading);
+        validSources.forEach(source => {
+            const link = document.createElement('a');
+            link.href = safeLink(source.url);
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = source.title || source.url;
+            sourcesDiv.appendChild(document.createElement('br'));
+            sourcesDiv.appendChild(link);
+        });
+        container.appendChild(sourcesDiv);
     }
 
     function copyCode(btn) {
@@ -632,14 +693,7 @@ th { background: #f1f1f1; font-weight: 600; }
             
             bubble.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             
-            if (data.sources && data.sources.length > 0) {
-                const sourcesDiv = document.createElement('div');
-                sourcesDiv.style.marginTop = '10px';
-                sourcesDiv.style.fontSize = '12px';
-                sourcesDiv.innerHTML = '<strong>Fontes:</strong><br>' + 
-                    data.sources.map(s => `<a href="${s.url}" target="_blank" style="color:var(--red); text-decoration:underline;">${s.title}</a>`).join('<br>');
-                bubble.appendChild(sourcesDiv);
-            }
+            appendSources(bubble, data.sources);
 
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'actions';
