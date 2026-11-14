@@ -113,6 +113,17 @@ CONTEXTO DA CONVERSA:
 Utiliza o historico de mensagens recebido para compreender
 a conversa atual.
 
+PESQUISA E ATUALIDADE:
+- A pesquisa na Web e uma ferramenta que deves solicitar quando a resposta
+  depender de factos externos atuais, verificacao de fontes, acontecimentos
+  recentes, disponibilidade, precos, horarios, versoes ou dados que possam mudar.
+- Nao solicites pesquisa apenas porque uma palavra especifica apareceu.
+- Tambem nao evites pesquisar apenas porque o utilizador formulou a pergunta
+  de maneira indireta ou continuou um assunto anterior. Interpreta a intencao
+  e o contexto completo da conversa.
+- Se nao houver pesquisa ou fontes verificaveis, nao afirmes que verificaste
+  informacoes em tempo real. Distingue conhecimento geral de factos atuais.
+
 MEMORIA VISUAL TEXTUAL:
 - Quando receberes uma imagem nova, analisa-a visualmente apenas nesse pedido.
 - Responde ao pedido do utilizador e termina com uma secção "Registo visual".
@@ -321,6 +332,65 @@ def clean_history(history):
         cleaned.append({"role": role, "content": content})
 
     return cleaned
+
+
+# =========================================================
+# DECISAO CONTEXTUAL DE PESQUISA
+# =========================================================
+
+RESEARCH_PLANNER_PROMPT = """
+Es um modulo interno de decisao de ferramentas da MGD AI. Analisa a mensagem
+mais recente JUNTO COM o historico fornecido. Nao respondas ao utilizador.
+Decide se a tarefa exige pesquisa na Web para produzir uma resposta correta.
+
+Usa pesquisa quando forem necessarios factos externos verificaveis que possam
+ter mudado, confirmacao de informacao atual, acontecimentos, disponibilidade,
+precos, horarios, versoes, resultados, politicas atuais, comparacoes de ofertas
+ou quando o utilizador pedir explicitamente para pesquisar/verificar fontes.
+Nao uses pesquisa para explicacoes estaveis, calculos, escrita, traducao,
+conversa, opinioes claramente subjetivas ou conhecimento geral suficiente.
+Uma pergunta de seguimento pode exigir pesquisa mesmo sem repetir o assunto.
+Nao decidas por palavras isoladas: interpreta a intencao e o contexto.
+
+Devolve SOMENTE um objeto JSON neste formato:
+{"search": true, "query": "consulta curta e especifica"}
+ou
+{"search": false, "query": ""}
+Nao inventes a necessidade de pesquisa. Se houver duvida real sobre atualidade
+ou verificacao externa, prefere pesquisar. A consulta deve refletir o pedido,
+nao acrescentar factos presumidos.
+"""
+
+
+def decidir_pesquisa_contextual(message, history):
+    """Pede ao modelo que decida com base na intencao e no contexto, nao em regex."""
+    planner_messages = [
+        {"role": "system", "content": RESEARCH_PLANNER_PROMPT},
+        *history[-8:],
+        {"role": "user", "content": message[:MAX_MESSAGE_LENGTH]}
+    ]
+
+    raw = groq_chat_with_retry(
+        planner_messages,
+        GROQ_MODEL_TEXT,
+        temperature=0,
+        max_tokens=120,
+        retries=2
+    )
+
+    # Aceita JSON puro ou JSON envolvido acidentalmente em bloco de codigo.
+    candidate = str(raw).strip()
+    candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE)
+    match = re.search(r"\{.*?\}", candidate, re.DOTALL)
+    if not match:
+        raise ValueError("A decisao contextual de pesquisa devolveu um formato invalido.")
+
+    decision = json.loads(match.group(0))
+    should_search = decision.get("search") is True
+    query = str(decision.get("query") or "").strip()
+    if should_search and not query:
+        query = message[:500]
+    return should_search, query[:500]
 
 
 # =========================================================
@@ -785,27 +855,36 @@ def chat():
                             "Pede para ele copiar e colar o texto. PROIBIDO inventar."
                         )
                 else:
-                    # Mantém-se a lógica de pesquisa atual nesta etapa.
-                    # A decisão contextual de pesquisar será melhorada na próxima fase.
-                    precisa_pesquisar = bool(re.search(
-                        r"(noticias|hoje|agora|preco|tempo|clima|resultado|jogo|versao|atual|recente|2026|2025)",
-                        message,
-                        re.IGNORECASE
-                    ))
+                    # A necessidade de pesquisa e decidida pelo modelo com base
+                    # na intencao e no historico, nunca por uma lista de keywords.
+                    yield activity("A avaliar se a resposta exige verificacao externa")
+                    try:
+                        precisa_pesquisar, consulta_web = decidir_pesquisa_contextual(
+                            message, history
+                        )
+                    except Exception as planner_error:
+                        app.logger.warning(
+                            "Nao foi possivel concluir a decisao contextual de pesquisa: %s",
+                            planner_error
+                        )
+                        precisa_pesquisar, consulta_web = False, ""
+                        yield activity("Decisao de pesquisa indisponivel; a responder sem alegar verificacao Web")
 
                     if precisa_pesquisar and TAVILY_API_KEY:
-                        yield activity("A pesquisar na Web")
-                        sources = tavily_search(message)
+                        yield activity("A pesquisar na Web com base no contexto")
+                        sources = tavily_search(consulta_web)
                         if sources:
                             yield activity(f"Pesquisa concluída; {len(sources)} fontes encontradas")
-                            source_context = "\n\nFONTES:\n"
+                            source_context = "\n\nFONTES VERIFICADAS PARA ESTA RESPOSTA:\n"
                             for i, source in enumerate(sources, 1):
                                 source_context += (
                                     f"[{i}] {source['title']} ({source['url']})\n"
                                     f"{source['content']}\n\n"
                                 )
                         else:
-                            yield activity("Pesquisa concluída sem resultados utilizáveis")
+                            yield activity("A pesquisa foi solicitada, mas não encontrou resultados utilizáveis")
+                    elif precisa_pesquisar and not TAVILY_API_KEY:
+                        yield activity("A pesquisa seria necessária, mas a ferramenta Web não está configurada")
 
             yield activity("A preparar o contexto para a resposta")
 
