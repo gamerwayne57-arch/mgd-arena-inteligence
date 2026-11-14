@@ -45,12 +45,13 @@ REQUEST_TIMEOUT = 40
 
 # Histórico contextual
 
-MAX_HISTORY_MESSAGES = 24
+MAX_HISTORY_MESSAGES = 10
 MAX_MESSAGE_LENGTH = 4000
+MAX_HISTORY_CHARS = 12000
 
 # Limite para imagens recebidas no histórico
 
-MAX_IMAGE_LENGTH = 4_000_000
+MAX_IMAGE_LENGTH = 2_000_000
 
 
 SYSTEM_PROMPT = """
@@ -112,14 +113,20 @@ CONTEXTO DA CONVERSA:
 Utiliza o historico de mensagens recebido para compreender
 a conversa atual.
 
-Quando existirem imagens anteriores no historico,
-considera-as como parte do contexto visual da conversa.
-
-Se o utilizador fizer uma pergunta sobre uma imagem
-anterior, consulta essa imagem antes de responder.
-
-Nunca afirmes que nao recebeste uma imagem se ela
-estiver presente no historico que recebeste.
+MEMORIA VISUAL TEXTUAL:
+- Quando receberes uma imagem nova, analisa-a visualmente apenas nesse pedido.
+- Responde ao pedido do utilizador e termina com uma secção "Registo visual".
+- Nesse registo, descreve os elementos realmente visíveis e relevantes,
+  incluindo texto legível, posições, cores, objetos, detalhes e relações espaciais.
+- Separa claramente "Identificado", "Incerto" e "Não verificado".
+- Não inventes detalhes nem declares como observado algo que não conseguiste ver.
+- O registo visual será guardado como texto no histórico e será a única memória
+  disponível para perguntas posteriores sobre essa imagem.
+- Em mensagens posteriores, usa apenas o registo textual e o histórico recebido.
+  Não assumes que ainda tens acesso à imagem original.
+- Se a resposta exigir um detalhe que não consta do registo ou que ficou incerto,
+  explica que não o consegues confirmar sem a imagem e pede ao utilizador
+  que a envie novamente. Nunca inventes uma verificação visual.
 """
 
 
@@ -232,6 +239,23 @@ def groq_chat_with_retry(
                     "Aguarda um minuto antes de tentar novamente."
                 )
 
+            if response.status_code == 413:
+                # 413 não melhora com repetição idêntica. Reduz o histórico,
+                # preservando o system prompt e a mensagem actual (incluindo imagem).
+                if not locals().get("compact_retry_done", False):
+                    compact_retry_done = True
+                    system_msg = next((m for m in messages if m.get("role") == "system"), None)
+                    last_user = next((m for m in reversed(messages) if m.get("role") == "user"), None)
+                    compact_messages = [m for m in (system_msg, last_user) if m]
+                    messages = compact_messages
+                    max_tokens = min(max_tokens, 1024)
+                    app.logger.warning("Groq 413: a repetir uma vez sem histórico antigo e com saída reduzida.")
+                    continue
+                raise RuntimeError(
+                    "O pedido continua demasiado grande para a Groq, mesmo após reduzir o histórico. "
+                    "Envia uma imagem mais pequena ou inicia uma nova conversa."
+                )
+
             response.raise_for_status()
 
             data = response.json()
@@ -250,6 +274,9 @@ def groq_chat_with_retry(
 
         except Exception as e:
 
+            if "413" in str(e) or "demasiado grande para a Groq" in str(e):
+                raise RuntimeError(str(e))
+
             if attempt < retries - 1:
                 time.sleep(2)
                 continue
@@ -264,62 +291,34 @@ def groq_chat_with_retry(
 # =========================================================
 
 def clean_history(history):
-
+    """Mantém apenas contexto recente e limita o tamanho total enviado à Groq."""
     if not isinstance(history, list):
         return []
 
     cleaned = []
+    total_chars = 0
 
-    # Mantém as últimas 24 mensagens anteriores
+    # Só texto recente. Imagens antigas não são reenviadas em cada pedido:
+    # isso fazia o payload crescer continuamente ao longo da conversa.
     for item in history[-MAX_HISTORY_MESSAGES:]:
-
         if not isinstance(item, dict):
             continue
 
         role = item.get("role")
         content = item.get("content")
-        image_src = item.get("imageSrc")
-
-        if role not in ("user", "assistant"):
-            continue
-
-        if not isinstance(content, str):
+        if role not in ("user", "assistant") or not isinstance(content, str):
             continue
 
         content = content.strip()[:MAX_MESSAGE_LENGTH]
+        if not content:
+            continue
 
-        # Recuperar imagem anterior
-        image_url = None
-
-        if role == "user" and image_src:
-            image_url = normalizar_imagem(image_src)
-
-        # Mensagem multimodal
-        if image_url:
-
-            cleaned.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": content if content else "Imagem enviada anteriormente."
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": image_url
-                        }
-                    }
-                ]
-            })
-
-        # Mensagem textual normal
-        elif content:
-
-            cleaned.append({
-                "role": role,
-                "content": content
-            })
+        remaining = MAX_HISTORY_CHARS - total_chars
+        if remaining <= 0:
+            break
+        content = content[:remaining]
+        total_chars += len(content)
+        cleaned.append({"role": role, "content": content})
 
     return cleaned
 
@@ -753,17 +752,17 @@ def chat():
         try:
             yield activity("Pedido recebido; a interpretar o contexto")
 
-            history_has_images = any(
-                isinstance(item.get("content"), list) for item in history
-            )
-
             if current_image:
                 model_to_use = GROQ_MODEL_VISION
                 final_message = message or "O que há nesta imagem?"
+                final_message += (
+                    "\n\nINSTRUÇÃO DE MEMÓRIA VISUAL: analisa a imagem agora. "
+                    "Responde primeiro ao pedido e termina com a secção 'Registo visual', "
+                    "dividida em 'Identificado', 'Incerto' e 'Não verificado'. "
+                    "Regista detalhes concretos e úteis que realmente consigas observar. "
+                    "Não adivinhes texto pequeno, números, identidades ou detalhes ocultos."
+                )
                 yield activity("Imagem recebida e validada; análise visual preparada")
-            elif history_has_images:
-                model_to_use = GROQ_MODEL_VISION
-                yield activity("A recuperar o contexto visual da conversa")
 
             if not current_image:
                 urls = re.findall(r"(https?://[^\s]+)", message)

@@ -316,14 +316,19 @@ th { background: #f1f1f1; font-weight: 600; }
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let width = img.width, height = img.height;
-                if (width > 800 || height > 800) {
-                    if (width > height) { height *= 800 / width; width = 800; }
-                    else { width *= 800 / height; height = 800; }
+                const MAX_SIDE = 768;
+                if (width > MAX_SIDE || height > MAX_SIDE) {
+                    const scale = MAX_SIDE / Math.max(width, height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
                 }
                 canvas.width = width; canvas.height = height;
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { alpha: false });
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                // JPEG comprimido reduz bastante o Base64 enviado à API.
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
                 currentImageBase64 = dataUrl.split(',')[1];
                 document.getElementById('image-preview-img').src = dataUrl;
                 document.getElementById('image-preview-container').style.display = 'block';
@@ -529,9 +534,19 @@ th { background: #f1f1f1; font-weight: 600; }
                 renderSidebar();
             }
 
-            const historyForBackend = chat.history.map(msg => ({
+            // Memória visual: preservar os registos das análises mesmo em conversas longas.
+            // As imagens antigas podem continuar guardadas localmente para exibição,
+            // mas nunca são reenviadas em Base64 nos pedidos seguintes.
+            const visualMemories = chat.history
+                .filter(msg => msg.role === 'assistant' && /Registo visual/i.test(String(msg.content || '')))
+                .slice(-3);
+            const recentHistory = chat.history.slice(-6);
+            const selectedHistory = [...visualMemories, ...recentHistory]
+                .filter((msg, index, arr) => arr.findIndex(x => x === msg) === index)
+                .slice(-9);
+            const historyForBackend = selectedHistory.map(msg => ({
                 role: msg.role,
-                content: msg.content
+                content: String(msg.content || '').slice(0, 4000)
             }));
 
             const response = await fetch(`${API}/chat`, {
