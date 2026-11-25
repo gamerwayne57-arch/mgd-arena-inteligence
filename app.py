@@ -758,6 +758,455 @@ def diagnostico_groq():
 
 
 # =========================================================
+# MGD AI COMMUNITY EDITION - MOTOR JSON
+# Base inicial: membros, quiz, ranking e registo de moderacao.
+# A ligacao WhatsApp sera adicionada separadamente.
+# =========================================================
+
+import threading
+import uuid
+from datetime import datetime, timezone, timedelta
+
+COMMUNITY_DATA_DIR = os.getenv(
+    "COMMUNITY_DATA_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "community_data")
+)
+COMMUNITY_API_TOKEN = os.getenv("COMMUNITY_API_TOKEN", "").strip()
+COMMUNITY_LOCK = threading.RLock()
+
+COMMUNITY_DEFAULTS = {
+    "community_members.json": {"members": {}},
+    "anime_quiz.json": {
+        "questions": [
+            {
+                "id": "anime001",
+                "question": "Qual e o nome do protagonista de One Piece?",
+                "options": {"A": "Roronoa Zoro", "B": "Monkey D. Luffy", "C": "Sanji", "D": "Trafalgar Law"},
+                "answer": "B",
+                "explanation": "Monkey D. Luffy e o protagonista de One Piece.",
+                "difficulty": "facil",
+                "category": "One Piece"
+            },
+            {
+                "id": "anime002",
+                "question": "Como se chama a aldeia natal de Naruto?",
+                "options": {"A": "Sunagakure", "B": "Kirigakure", "C": "Konohagakure", "D": "Iwagakure"},
+                "answer": "C",
+                "explanation": "Naruto cresceu em Konohagakure, a Vila Oculta da Folha.",
+                "difficulty": "facil",
+                "category": "Naruto"
+            },
+            {
+                "id": "anime003",
+                "question": "Quem criou Dragon Ball?",
+                "options": {"A": "Eiichiro Oda", "B": "Masashi Kishimoto", "C": "Tite Kubo", "D": "Akira Toriyama"},
+                "answer": "D",
+                "explanation": "Dragon Ball foi criado por Akira Toriyama.",
+                "difficulty": "facil",
+                "category": "Dragon Ball"
+            },
+            {
+                "id": "anime004",
+                "question": "Em Death Note, o que permite ao utilizador do caderno matar uma pessoa?",
+                "options": {"A": "Escrever o nome da pessoa, tendo o rosto em mente", "B": "Desenhar o rosto", "C": "Dizer o nome em voz alta", "D": "Tocar numa fotografia"},
+                "answer": "A",
+                "explanation": "A regra central do Death Note exige escrever o nome enquanto se visualiza o rosto da pessoa.",
+                "difficulty": "medio",
+                "category": "Death Note"
+            },
+            {
+                "id": "anime005",
+                "question": "Qual e o nome do protagonista de Bleach?",
+                "options": {"A": "Uryu Ishida", "B": "Renji Abarai", "C": "Ichigo Kurosaki", "D": "Byakuya Kuchiki"},
+                "answer": "C",
+                "explanation": "Ichigo Kurosaki e o protagonista de Bleach.",
+                "difficulty": "facil",
+                "category": "Bleach"
+            }
+        ],
+        "active_quiz": None,
+        "history": [],
+        "last_auto_quiz_at": None
+    },
+    "community_ranking.json": {"scores": {}},
+    "community_moderation.json": {"events": []},
+    "community_config.json": {
+        "community_name": "MGD AI Community Edition",
+        "quiz_auto_enabled": True,
+        "quiz_interval_minutes": 60,
+        "points_per_correct_answer": 10,
+        "moderation_mode": "hybrid",
+        "whatsapp_integration": "undecided"
+    }
+}
+
+
+def community_json_path(filename):
+    return os.path.join(COMMUNITY_DATA_DIR, filename)
+
+
+def community_load(filename):
+    """Le JSON; cria o ficheiro com os valores iniciais quando ainda nao existe."""
+    if filename not in COMMUNITY_DEFAULTS:
+        raise ValueError("Ficheiro Community Edition desconhecido.")
+    os.makedirs(COMMUNITY_DATA_DIR, exist_ok=True)
+    path = community_json_path(filename)
+    with COMMUNITY_LOCK:
+        if not os.path.exists(path):
+            community_save(filename, COMMUNITY_DEFAULTS[filename])
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            return data if isinstance(data, dict) else json.loads(json.dumps(COMMUNITY_DEFAULTS[filename]))
+        except (OSError, json.JSONDecodeError):
+            app.logger.exception("Falha ao ler %s; a usar valores iniciais.", filename)
+            return json.loads(json.dumps(COMMUNITY_DEFAULTS[filename]))
+
+
+def community_save(filename, data):
+    """Gravacao atomica para reduzir o risco de JSON incompleto."""
+    if filename not in COMMUNITY_DEFAULTS:
+        raise ValueError("Ficheiro Community Edition desconhecido.")
+    os.makedirs(COMMUNITY_DATA_DIR, exist_ok=True)
+    path = community_json_path(filename)
+    temp_path = path + ".tmp"
+    with COMMUNITY_LOCK:
+        with open(temp_path, "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp_path, path)
+
+
+def community_require_token():
+    """Protege rotas de escrita. Exige COMMUNITY_API_TOKEN no servidor."""
+    if not COMMUNITY_API_TOKEN:
+        return jsonify({"error": "Configura COMMUNITY_API_TOKEN nas variaveis de ambiente."}), 503
+    supplied = request.headers.get("Authorization", "")
+    expected = "Bearer " + COMMUNITY_API_TOKEN
+    if not secrets.compare_digest(supplied, expected):
+        return jsonify({"error": "Acesso nao autorizado."}), 401
+    return None
+
+
+def community_normalize_answer(value):
+    value = str(value or "").strip().casefold()
+    value = re.sub(r"\s+", " ", value)
+    return value
+
+
+def community_register_member(member_id, display_name):
+    member_id = str(member_id or "").strip()[:160]
+    display_name = str(display_name or "Membro") .strip()[:80]
+    if not member_id:
+        raise ValueError("member_id e obrigatorio.")
+    with COMMUNITY_LOCK:
+        data = community_load("community_members.json")
+        members = data.setdefault("members", {})
+        member = members.get(member_id)
+        if not isinstance(member, dict):
+            member = {
+                "member_id": member_id,
+                "display_name": display_name or "Membro",
+                "joined_at": datetime.now(timezone.utc).isoformat(),
+                "messages_seen": 0,
+                "quiz_correct": 0,
+                "quiz_answered": 0
+            }
+        else:
+            member["display_name"] = display_name or member.get("display_name", "Membro")
+        members[member_id] = member
+        community_save("community_members.json", data)
+        return member
+
+
+def community_create_quiz(is_automatic=False):
+    with COMMUNITY_LOCK:
+        quiz_data = community_load("anime_quiz.json")
+        questions = quiz_data.get("questions", [])
+        if not questions:
+            raise ValueError("Ainda nao existem perguntas no banco de quizzes.")
+        previous_ids = [item.get("question_id") for item in quiz_data.get("history", [])[-5:]]
+        candidates = [item for item in questions if item.get("id") not in previous_ids]
+        if not candidates:
+            candidates = questions
+        question = __import__("random").choice(candidates)
+        quiz_id = str(uuid.uuid4())
+        active = {
+            "quiz_id": quiz_id,
+            "question_id": question.get("id"),
+            "question": question.get("question", ""),
+            "options": question.get("options", {}),
+            "answer": question.get("answer", ""),
+            "explanation": question.get("explanation", ""),
+            "category": question.get("category", "Anime"),
+            "difficulty": question.get("difficulty", "normal"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "automatic": bool(is_automatic),
+            "responses": {}
+        }
+        quiz_data["active_quiz"] = active
+        quiz_data.setdefault("history", []).append({
+            "quiz_id": quiz_id,
+            "question_id": question.get("id"),
+            "created_at": active["created_at"],
+            "automatic": bool(is_automatic)
+        })
+        quiz_data["history"] = quiz_data["history"][-200:]
+        community_save("anime_quiz.json", quiz_data)
+        return {
+            "quiz_id": quiz_id,
+            "question": active["question"],
+            "options": active["options"],
+            "category": active["category"],
+            "difficulty": active["difficulty"],
+            "automatic": active["automatic"]
+        }
+
+
+def community_submit_answer(member_id, display_name, quiz_id, answer):
+    member = community_register_member(member_id, display_name)
+    with COMMUNITY_LOCK:
+        quiz_data = community_load("anime_quiz.json")
+        active = quiz_data.get("active_quiz")
+        if not active or active.get("quiz_id") != str(quiz_id):
+            raise ValueError("Este quiz ja nao esta ativo. Pede !quiz para iniciar outro.")
+        responses = active.setdefault("responses", {})
+        if member_id in responses:
+            raise ValueError("Ja respondeste a este quiz.")
+        submitted = community_normalize_answer(answer)
+        correct_key = community_normalize_answer(active.get("answer"))
+        options = active.get("options", {})
+        correct_text = community_normalize_answer(options.get(active.get("answer"), ""))
+        is_correct = submitted == correct_key or submitted == correct_text
+        if submitted in {community_normalize_answer(k) for k in options}:
+            is_correct = submitted == correct_key
+        responses[member_id] = {
+            "answer": str(answer)[:200],
+            "correct": bool(is_correct),
+            "answered_at": datetime.now(timezone.utc).isoformat()
+        }
+        community_save("anime_quiz.json", quiz_data)
+
+        members_data = community_load("community_members.json")
+        stored_member = members_data.setdefault("members", {}).setdefault(member_id, member)
+        stored_member["quiz_answered"] = int(stored_member.get("quiz_answered", 0)) + 1
+        if is_correct:
+            stored_member["quiz_correct"] = int(stored_member.get("quiz_correct", 0)) + 1
+        community_save("community_members.json", members_data)
+
+        ranking = community_load("community_ranking.json")
+        scores = ranking.setdefault("scores", {})
+        score = scores.setdefault(member_id, {"display_name": member.get("display_name", "Membro"), "points": 0, "correct_answers": 0})
+        score["display_name"] = member.get("display_name", "Membro")
+        if is_correct:
+            config = community_load("community_config.json")
+            points = max(0, int(config.get("points_per_correct_answer", 10)))
+            score["points"] = int(score.get("points", 0)) + points
+            score["correct_answers"] = int(score.get("correct_answers", 0)) + 1
+        community_save("community_ranking.json", ranking)
+        return {
+            "correct": bool(is_correct),
+            "correct_answer": active.get("answer"),
+            "correct_text": options.get(active.get("answer"), ""),
+            "explanation": active.get("explanation", ""),
+            "points_awarded": points if is_correct else 0,
+            "total_points": int(score.get("points", 0))
+        }
+
+
+def community_leaderboard(limit=10):
+    ranking = community_load("community_ranking.json").get("scores", {})
+    rows = [
+        {"member_id": key, "display_name": value.get("display_name", "Membro"),
+         "points": int(value.get("points", 0)),
+         "correct_answers": int(value.get("correct_answers", 0))}
+        for key, value in ranking.items() if isinstance(value, dict)
+    ]
+    rows.sort(key=lambda item: (item["points"], item["correct_answers"]), reverse=True)
+    return rows[:max(1, min(int(limit), 50))]
+
+
+def community_command_result(text, member_id, display_name):
+    """Interpreta comandos do grupo sem depender de palavras-chave soltas."""
+    raw = str(text or "").strip()
+    command, _, argument = raw.partition(" ")
+    command = command.casefold()
+    if command == "!ajuda":
+        return {"type": "text", "reply": "Comandos disponiveis: !quiz, !responder A, !ranking, !perfil e !ajuda."}
+    if command == "!quiz":
+        quiz = community_create_quiz(False)
+        lines = [quiz["question"]]
+        lines.extend([f"{key}) {value}" for key, value in quiz["options"].items()])
+        lines.append("Responde com !responder A, B, C ou D.")
+        return {"type": "quiz", "quiz": quiz, "reply": "\n".join(lines)}
+    if command == "!ranking":
+        rows = community_leaderboard(10)
+        if not rows:
+            return {"type": "text", "reply": "O ranking ainda esta vazio. Participa no primeiro quiz!"}
+        lines = ["RANKING MGD AI COMMUNITY"]
+        lines.extend([f"{i}. {row['display_name']} - {row['points']} pontos" for i, row in enumerate(rows, 1)])
+        return {"type": "ranking", "ranking": rows, "reply": "\n".join(lines)}
+    if command == "!perfil":
+        member = community_register_member(member_id, display_name)
+        score = community_load("community_ranking.json").get("scores", {}).get(member_id, {})
+        return {"type": "profile", "reply": f"{member.get('display_name')}: {score.get('points', 0)} pontos, {member.get('quiz_correct', 0)} respostas certas."}
+    if command == "!responder":
+        quiz = community_load("anime_quiz.json").get("active_quiz") or {}
+        if not argument.strip():
+            raise ValueError("Usa !responder A, B, C ou D.")
+        result = community_submit_answer(member_id, display_name, quiz.get("quiz_id"), argument.strip())
+        if result["correct"]:
+            reply = f"Resposta certa! +{result['points_awarded']} pontos. {result['explanation']}"
+        else:
+            reply = f"Ainda nao foi desta! A resposta correta era {result['correct_answer']}) {result['correct_text']}. {result['explanation']}"
+        return {"type": "answer", "result": result, "reply": reply}
+    return {"type": "unknown", "reply": "Nao reconheci esse comando. Escreve !ajuda para ver os comandos."}
+
+
+@app.get("/community/health")
+def community_health():
+    members = community_load("community_members.json").get("members", {})
+    quiz = community_load("anime_quiz.json")
+    return jsonify({
+        "status": "ok",
+        "community_engine": "ready",
+        "members": len(members),
+        "quiz_questions": len(quiz.get("questions", [])),
+        "active_quiz": bool(quiz.get("active_quiz")),
+        "storage": "json",
+        "whatsapp": "not_connected"
+    })
+
+
+@app.get("/community/ranking")
+def community_ranking_route():
+    return jsonify({"ranking": community_leaderboard(request.args.get("limit", 10))})
+
+
+@app.post("/community/member/register")
+@limiter.limit("30 per minute")
+def community_member_register_route():
+    denied = community_require_token()
+    if denied:
+        return denied
+    data = request.get_json(silent=True) or {}
+    try:
+        member = community_register_member(data.get("member_id"), data.get("display_name"))
+        return jsonify({"ok": True, "member": member})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+
+@app.post("/community/quiz/start")
+@limiter.limit("10 per minute")
+def community_quiz_start_route():
+    denied = community_require_token()
+    if denied:
+        return denied
+    try:
+        return jsonify({"ok": True, "quiz": community_create_quiz(False)})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 503
+
+
+@app.post("/community/quiz/answer")
+@limiter.limit("30 per minute")
+def community_quiz_answer_route():
+    denied = community_require_token()
+    if denied:
+        return denied
+    data = request.get_json(silent=True) or {}
+    try:
+        result = community_submit_answer(
+            str(data.get("member_id", "")).strip(),
+            data.get("display_name", "Membro"),
+            data.get("quiz_id"),
+            data.get("answer")
+        )
+        return jsonify({"ok": True, "result": result})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+
+@app.post("/community/command")
+@limiter.limit("40 per minute")
+def community_command_route():
+    denied = community_require_token()
+    if denied:
+        return denied
+    data = request.get_json(silent=True) or {}
+    try:
+        result = community_command_result(
+            data.get("text", ""),
+            str(data.get("member_id", "")).strip(),
+            data.get("display_name", "Membro")
+        )
+        return jsonify({"ok": True, **result})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+
+@app.post("/community/quiz/auto")
+@limiter.limit("5 per minute")
+def community_quiz_auto_route():
+    """A futura WhatsApp Bridge consulta esta rota no intervalo configurado."""
+    denied = community_require_token()
+    if denied:
+        return denied
+    config = community_load("community_config.json")
+    if not config.get("quiz_auto_enabled", True):
+        return jsonify({"ok": True, "due": False, "reason": "automatic_quiz_disabled"})
+    quiz_data = community_load("anime_quiz.json")
+    last = quiz_data.get("last_auto_quiz_at")
+    interval = max(5, int(config.get("quiz_interval_minutes", 60)))
+    if last:
+        try:
+            last_dt = datetime.fromisoformat(last)
+            if datetime.now(timezone.utc) - last_dt < timedelta(minutes=interval):
+                return jsonify({"ok": True, "due": False, "reason": "interval_not_reached"})
+        except (TypeError, ValueError):
+            pass
+    try:
+        quiz = community_create_quiz(True)
+        quiz_data = community_load("anime_quiz.json")
+        quiz_data["last_auto_quiz_at"] = datetime.now(timezone.utc).isoformat()
+        community_save("anime_quiz.json", quiz_data)
+        return jsonify({"ok": True, "due": True, "quiz": quiz})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 503
+
+
+@app.post("/community/moderation/report")
+@limiter.limit("30 per minute")
+def community_moderation_report_route():
+    """Regista ocorrencias para revisao humana; nao expulsa nem pune membros."""
+    denied = community_require_token()
+    if denied:
+        return denied
+    data = request.get_json(silent=True) or {}
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "member_id": str(data.get("member_id", ""))[:160],
+        "message_id": str(data.get("message_id", ""))[:160],
+        "category": str(data.get("category", "needs_review"))[:80],
+        "description": str(data.get("description", ""))[:1000],
+        "status": "pending_review",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    moderation = community_load("community_moderation.json")
+    moderation.setdefault("events", []).append(event)
+    moderation["events"] = moderation["events"][-1000:]
+    community_save("community_moderation.json", moderation)
+    return jsonify({"ok": True, "event": event})
+
+
+# =========================================================
+# FIM DO MOTOR MGD AI COMMUNITY EDITION
+# =========================================================
+
+
+# =========================================================
 # ROTAS
 # =========================================================
 
